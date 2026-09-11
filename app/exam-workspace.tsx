@@ -8,6 +8,7 @@ import {ImageReader} from './library-workspace';
 import {readLibraryStore} from '../lib/library.mjs';
 import {examStatus,publicExam,readAttempts,startAttempt,saveAttempt,submitAttempt} from '../lib/exam-attempts.mjs';
 import {studentGrade,gradingKey} from '../lib/grading.mjs';
+import {seedSamplePapers} from '../lib/sample-papers.mjs';
 type Exam=ReturnType<typeof publicExam>;
 type Attempt=ReturnType<typeof startAttempt>;
 export default function ExamWorkspace({user}:{user:Account}){
@@ -23,7 +24,7 @@ export default function ExamWorkspace({user}:{user:Account}){
  const resumeKey='path-edu-exam-active-'+user.id;
  const [grade,setGrade]=useState<ReturnType<typeof studentGrade>>(null);
  useEffect(()=>{const update=()=>{try{setGrade(attempt?.status==='submitted'?studentGrade(localStorage,attempt.id,user):null);}catch(e){setError((e as Error).message);}};update();const changed=(e:StorageEvent)=>{if(e.key===gradingKey){update();refresh();}};window.addEventListener('storage',changed);return()=>window.removeEventListener('storage',changed);},[attempt?.id,attempt?.status,user.id]);
- function refresh(){setPublished(readAttempts(localStorage).filter((a:Attempt)=>a.studentId===user.id&&studentGrade(localStorage,a.id,user)).map((a:Attempt)=>a.id));setExams(readLibraryStore(localStorage).exams.filter((e:{students:string[];cancelled?:boolean})=>e.students.includes(user.id)&&!e.cancelled).map(publicExam));setAttempts(readAttempts(localStorage).filter((a:Attempt)=>a.studentId===user.id));}
+ function refresh(){seedSamplePapers(localStorage);setPublished(readAttempts(localStorage).filter((a:Attempt)=>a.studentId===user.id&&studentGrade(localStorage,a.id,user)).map((a:Attempt)=>a.id));setExams(readLibraryStore(localStorage).exams.filter((e:{students:string[];cancelled?:boolean})=>e.students.includes(user.id)&&!e.cancelled).map(publicExam));setAttempts(readAttempts(localStorage).filter((a:Attempt)=>a.studentId===user.id));}
  useEffect(()=>{try{refresh();const id=sessionStorage.getItem(resumeKey);const saved=readAttempts(localStorage).find((a:Attempt)=>a.id===id&&a.studentId===user.id);if(saved){setAttempt(saved);setAnswers(saved.answers);}}catch(e){setError((e as Error).message);}const timer=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(timer);},[user.id]);
  useEffect(()=>{if(!attempt||attempt.status!=='in_progress'||now<attempt.deadline)return;try{const done=submitAttempt(localStorage,attempt,user,true);if(unsaved)setUnaccepted(JSON.stringify(answers,null,2));setAttempt(done);setAnswers(done.answers);setNotice('已截止：已提交最后成功保存的答案');setUnsaved(false);}catch(e){setError((e as Error).message);}},[now,attempt]);
  useEffect(()=>{const leave=(e:Event)=>{if(unsaved){e.preventDefault();setError('有未保存内容，请重试保存或复制文本后处理。');}};const unload=(e:BeforeUnloadEvent)=>{if(unsaved){e.preventDefault();e.returnValue='';}};window.addEventListener('edu-before-leave',leave);window.addEventListener('beforeunload',unload);return()=>{window.removeEventListener('edu-before-leave',leave);window.removeEventListener('beforeunload',unload);};},[unsaved]);

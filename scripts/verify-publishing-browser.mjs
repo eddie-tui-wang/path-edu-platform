@@ -6,6 +6,9 @@ async function login(role){await p.locator('[name=username]').fill('demo_'+role)
 const nav=name=>p.locator('.edu-sidebar').getByRole('button',{name,exact:true}).click();
 try{
  await p.goto('http://localhost:3002/');await login('teacher');await nav('考试管理');
+  // ready-made demo papers seed themselves and must be listed before anything is created
+ for(const title of ['示例卷 · 全单选十片','示例卷 · 全简答十片','示例卷 · 混合十片'])await p.getByText(title,{exact:true}).first().waitFor();
+ assert.match(await p.locator('article').filter({hasText:'示例卷 · 全单选十片'}).first().innerText(),/10题 · 100分/,'a seeded paper must carry ten questions and 100 points');
  await p.getByRole('button',{name:'新建试卷',exact:true}).click();
  await p.getByRole('button',{name:'选择十道默认简答题',exact:true}).click();
  await p.getByRole('textbox',{name:'考试名称',exact:true}).fill('隔离发布验收卷');
@@ -16,7 +19,7 @@ try{
  await p.getByText('已发放，可切换指定学生查看',{exact:true}).waitFor();
  await p.getByRole('button',{name:'退出',exact:true}).click();await login('student');await nav('考试中心');
  assert.ok(await p.getByText('隔离发布验收卷',{exact:true}).count());
- await p.getByRole('button',{name:'开始考试',exact:true}).click();await p.getByRole('button',{name:'确认开始',exact:true}).click();
+ await p.locator('article').filter({hasText:'隔离发布验收卷'}).getByRole('button',{name:'开始考试',exact:true}).click();await p.getByRole('button',{name:'确认开始',exact:true}).click();
  assert.equal(await p.getByText('AI追问',{exact:true}).count(),0);
  // exam draft write failure: surface it, keep the answer, and never claim it saved
  await p.evaluate(()=>{window.origAttemptSet=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k.startsWith('path-edu-exam-attempts-v1'))throw new DOMException('测试：答卷写入失败','QuotaExceededError');return window.origAttemptSet.call(this,k,v);};});
@@ -31,7 +34,7 @@ try{
  await p.getByRole('button',{name:'检查并交卷',exact:true}).click();await p.getByRole('button',{name:'确认交卷',exact:true}).click();
  await p.getByRole('heading',{name:'已交卷 · 等待教师发布',exact:true}).waitFor();
  await p.getByRole('button',{name:'退出',exact:true}).click();await login('teacher');await nav('考试管理');
- await p.getByRole('button',{name:'阅卷与成绩',exact:true}).click();await p.getByRole('button',{name:'查看答卷',exact:true}).click();
+ await p.locator('article').filter({hasText:'隔离发布验收卷'}).getByRole('button',{name:'阅卷与成绩',exact:true}).click();await p.getByRole('button',{name:'查看答卷',exact:true}).click();
  await p.getByRole('spinbutton',{name:'第1题得分',exact:true}).fill('8');
  await p.evaluate(()=>{window.originalStorageSet=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(key.startsWith('path-edu-review-draft-'))throw new DOMException('测试：评分草稿写入失败','QuotaExceededError');return window.originalStorageSet.call(this,key,value);};});
  await p.getByRole('textbox',{name:'第1题点评',exact:true}).fill('流程测试点评');

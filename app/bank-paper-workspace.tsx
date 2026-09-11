@@ -9,6 +9,7 @@ import {readLibraryStore} from '../lib/library.mjs';
 import {buildBankPaper,publishBankPaper} from '../lib/bank-paper.mjs';
 import {readAttempts} from '../lib/exam-attempts.mjs';
 import {readGrading,gradingProgress} from '../lib/grading.mjs';
+import {seedSamplePapers} from '../lib/sample-papers.mjs';
 import {demoKey,initialDemoAccounts} from '../lib/demo-accounts.mjs';
 type Bank={id:string;revision:number;owner:string;status:string;type:string;prompt:string;practiceOpen:boolean;image:string;imageId:string;caseSnapshot:{version:number;title:string;history:string;organ:string}};
 type Draft={id:string;title:string;type:string;minutes:number;opensAt:string;closesAt:string;students:string[];selections:{id:string;revision:number;points:number}[]};
@@ -22,7 +23,7 @@ export default function BankPaperWorkspace({user}:{user:Account}){
  const key='path-edu-bank-paper-draft-'+user.id;
  const [gradingExam,setGradingExam]=useState<string|null>(null);
  function accounts():Account[]{const raw=localStorage.getItem(demoKey);return (raw?JSON.parse(raw).users:initialDemoAccounts()).filter((s:Account)=>s.active&&s.roles.includes('student'));}
- function refresh(){setHasDraft(Boolean(localStorage.getItem(key)));setBank(seedQuestions(localStorage));setStudents(accounts());const owned=readLibraryStore(localStorage).exams.filter((p:Paper)=>p.owner===user.id);setPapers(owned);const attempts=readAttempts(localStorage),grading=readGrading(localStorage);setProgress(Object.fromEntries(owned.map((p:Paper)=>[p.id,gradingProgress(attempts,grading,p.id)])));}
+ function refresh(){setHasDraft(Boolean(localStorage.getItem(key)));setBank(seedQuestions(localStorage));seedSamplePapers(localStorage);setStudents(accounts());const owned=readLibraryStore(localStorage).exams.filter((p:Paper)=>p.owner===user.id);setPapers(owned);const attempts=readAttempts(localStorage),grading=readGrading(localStorage);setProgress(Object.fromEntries(owned.map((p:Paper)=>[p.id,gradingProgress(attempts,grading,p.id)])));}
  useEffect(()=>{try{refresh();}catch(e){setError((e as Error).message);}},[user.id]);
  function start(fresh=false){try{if(fresh&&hasDraft&&!window.confirm('已有一份组卷草稿。新建后保存将替换旧草稿，继续？'))return;const saved=fresh?null:localStorage.getItem(key);setDraft(saved?JSON.parse(saved):{id:crypto.randomUUID(),title:'十片模拟出科考试',type:'short',minutes:30,opensAt:localDate(new Date()),closesAt:localDate(new Date(Date.now()+86400000)),students:[],selections:[]});setPreview(null);setDirty(false);refresh();setError('');}catch(e){setError((e as Error).message);}}
  function edit(value:Partial<Draft>){if(!draft)return;setDraft({...draft,...value});setPreview(null);setDirty(true);setNotice('有未保存修改');}

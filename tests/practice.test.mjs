@@ -4,9 +4,10 @@ import {availablePractice,seedQuestions,readPractice,submitPractice} from '../li
 import {questionKey,readQuestions,setQuestionAvailability} from '../lib/question-bank.mjs';
 const student={id:'student-a',roles:['student']},teacher={id:'demo-teacher',roles:['teacher']};
 function store(){const data=new Map();return {getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v)};}
-test('default bank has one open single and ten closed short questions; no resets',()=>{
- const s=store(),seed=seedQuestions(s);assert.equal(seed.length,11);assert.equal(availablePractice(seed).length,1);
- setQuestionAvailability(s,seed[0],teacher,'disable');assert.equal(seedQuestions(s).length,11);assert.equal(availablePractice(readQuestions(s)).length,0);
+test('default bank seeds one open single, nine closed singles and ten closed short questions; no resets',()=>{
+ const s=store(),seed=seedQuestions(s);assert.equal(seed.length,20);assert.equal(seed.filter(q=>q.type==='single').length,10);assert.equal(seed.filter(q=>q.type==='short').length,10);
+ assert.equal(availablePractice(seed).length,1,'only the practice example starts open');
+ setQuestionAvailability(s,seed[0],teacher,'disable');assert.equal(seedQuestions(s).length,20);assert.equal(availablePractice(readQuestions(s)).length,0);
 });
 test('practice listing has no reference answers and filters latest availability',()=>{
  const s=store(),seed=seedQuestions(s),[q]=availablePractice(seed);assert.equal(q.correctId,undefined);assert.equal(q.explanation,undefined);assert.equal(q.caseSnapshot,undefined);
@@ -20,7 +21,7 @@ test('submission is idempotent, immutable and isolated per student; single scori
  assert.throws(()=>submitPractice(s,{id:'new',roles:['student']},q,'unknown'),/关闭/);assert.throws(()=>submitPractice(s,teacher,q,'unknown'),/仅学生/);
 });
 test('short answers have no invented AI score; failed writes do not report success',()=>{
- const s=store(),rows=seedQuestions(s);setQuestionAvailability(s,rows[1],teacher,'practice');const q=availablePractice(readQuestions(s)).find(q=>q.type==='short');
+ const s=store(),rows=seedQuestions(s);setQuestionAvailability(s,rows.find(q=>q.type==='short'),teacher,'practice');const q=availablePractice(readQuestions(s)).find(q=>q.type==='short');
  assert.throws(()=>submitPractice({...s,setItem:()=>{throw Error('quota');}},student,q,'需要进一步鉴别'),/quota/);assert.equal(readPractice(s,student).length,0);
  const result=submitPractice(s,student,q,'需要进一步鉴别');assert.equal(result.correct,null);assert.equal(result.answer,'需要进一步鉴别');
 });
