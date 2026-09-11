@@ -4,11 +4,15 @@ const browser=await chromium.launch({channel:'chrome',headless:true});
 const p=await browser.newPage();p.setDefaultTimeout(12000);
 async function login(role){await p.locator('[name=username]').fill('demo_'+role);await p.locator('[name=password]').fill('Demo2026!'+role);await p.getByRole('button',{name:'进入演示'}).click();}
 const nav=name=>p.locator('.edu-sidebar').getByRole('button',{name,exact:true}).click();
+// The teacher paper list became the dense .data-table in c71f6a3: each paper is a direct
+// <details> row (nested details exist, so scope to direct children). The student exam
+// centre still renders <article> cards, so only the teacher-side selectors change.
+const paperRow=title=>p.locator('.data-table > details').filter({hasText:title});
 try{
  await p.goto('http://localhost:3002/');await login('teacher');await nav('考试管理');
   // ready-made demo papers seed themselves and must be listed before anything is created
  for(const title of ['示例卷 · 全单选十片','示例卷 · 全简答十片','示例卷 · 混合十片'])await p.getByText(title,{exact:true}).first().waitFor();
- assert.match(await p.locator('article').filter({hasText:'示例卷 · 全单选十片'}).first().innerText(),/10题 · 100分/,'a seeded paper must carry ten questions and 100 points');
+ assert.match(await paperRow('示例卷 · 全单选十片').first().innerText(),/10题 · 100分/,'a seeded paper must carry ten questions and 100 points');
  await p.getByRole('button',{name:'新建试卷',exact:true}).click();
  await p.getByRole('button',{name:'选择十道默认简答题',exact:true}).click();
  await p.getByRole('textbox',{name:'考试名称',exact:true}).fill('隔离发布验收卷');
@@ -34,7 +38,7 @@ try{
  await p.getByRole('button',{name:'检查并交卷',exact:true}).click();await p.getByRole('button',{name:'确认交卷',exact:true}).click();
  await p.getByRole('heading',{name:'已交卷 · 等待教师发布',exact:true}).waitFor();
  await p.getByRole('button',{name:'退出',exact:true}).click();await login('teacher');await nav('考试管理');
- await p.locator('article').filter({hasText:'隔离发布验收卷'}).getByRole('button',{name:'阅卷与成绩',exact:true}).click();await p.getByRole('button',{name:'查看答卷',exact:true}).click();
+ await paperRow('隔离发布验收卷').getByRole('button',{name:'阅卷与成绩',exact:true}).click();await p.getByRole('button',{name:'查看答卷',exact:true}).click();
  await p.getByRole('spinbutton',{name:'第1题得分',exact:true}).fill('8');
  await p.evaluate(()=>{window.originalStorageSet=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(key.startsWith('path-edu-review-draft-'))throw new DOMException('测试：评分草稿写入失败','QuotaExceededError');return window.originalStorageSet.call(this,key,value);};});
  await p.getByRole('textbox',{name:'第1题点评',exact:true}).fill('流程测试点评');
@@ -81,7 +85,7 @@ try{
  await p.getByRole('heading',{name:'已交卷 · 等待教师发布',exact:true}).waitFor();
 
  await p.getByRole('button',{name:'退出',exact:true}).click();await login('teacher');await nav('考试管理');
- await p.locator('article').filter({hasText:'混合卷验收'}).getByRole('button',{name:'阅卷与成绩',exact:true}).click();
+ await paperRow('混合卷验收').getByRole('button',{name:'阅卷与成绩',exact:true}).click();
  await p.getByRole('button',{name:'查看答卷',exact:true}).click();
  await p.getByRole('spinbutton',{name:'第1题得分',exact:true}).fill('6');
  await p.getByRole('textbox',{name:'第1题点评',exact:true}).fill('混合卷点评');

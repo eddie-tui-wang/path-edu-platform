@@ -34,7 +34,8 @@ try{
  await p.locator('label').filter({hasText:'答案解析'}).locator('textarea').fill('流程验收解析');
  await p.getByRole('button',{name:'保存草稿',exact:true}).click();assert.ok(await p.getByRole('button',{name:'保存草稿',exact:true}).isDisabled());
  await p.getByRole('button',{name:'确认入库',exact:true}).click();await p.getByRole('dialog').getByRole('button',{name:'确认入库',exact:true}).click();
- const item=p.locator('article').filter({has:p.getByRole('heading',{name:'入库定位验收',exact:true})});await item.waitFor();
+ // the question list became the dense .data-table in c71f6a3: rows are divs, no <article>/<h2>.
+ const item=p.locator('.data-table > div').filter({hasText:'入库定位验收'});await item.waitFor();
  await p.waitForFunction(()=>document.activeElement?.id.startsWith('question-'));assert.ok(await item.evaluate(el=>el===document.activeElement));assert.equal(await p.getByLabel('搜索题目',{exact:true}).inputValue(),'');
  assert.equal(await p.getByRole('button',{name:'结束编辑',exact:true}).count(),0);
  await nav('教学记录');assert.equal(await p.getByRole('button',{name:'← 返回病例资料',exact:true}).count(),0);

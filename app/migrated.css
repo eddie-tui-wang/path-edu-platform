@@ -517,7 +517,9 @@
 .teacher-ability, .teacher-analysis-detail { color: var(--navy); }
 .teacher-ability > header, .teacher-analysis-detail > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 22px 24px; border: 1px solid var(--primary-soft); border-radius: 14px 14px 0 0; background: linear-gradient(120deg, #fff, var(--background)); }
 .teacher-ability > header button, .teacher-analysis-detail > header button { padding: 0; border: 0; color: var(--primary); background: transparent; font-size: var(--type-ui); }
-.teacher-ability > header span:not(.teacher-rule) { display: block; margin-top: 10px; color: var(--primary); font-size: var(--type-caption); font-weight: 700; letter-spacing: .08em; }
+.teacher-ability > header span:not(.teacher-rule):not(.library-tag) { display: block; margin-top: 10px; color: var(--primary); font-size: var(--type-caption); font-weight: 700; letter-spacing: .08em; }
+/* The 示例 provenance chip is a pill, not a stacked header label; keep the gap the block rule gave it. */
+.teacher-ability > header .library-tag { margin-top: 10px; }
 .teacher-ability h2, .teacher-analysis-detail h2 { margin: 5px 0; font-size: var(--type-section-title); }
 .teacher-ability header p, .teacher-analysis-detail header p { margin: 0; color: var(--muted); font-size: var(--type-ui); }
 .teacher-rule { padding: 7px 10px; border-radius: 999px; color: var(--muted); background: var(--primary-soft); font-size: var(--type-caption); }

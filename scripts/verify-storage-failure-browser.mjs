@@ -22,7 +22,8 @@ try{
  // A short-answer practice must be open before the student side can exercise it.
  await p.goto('http://localhost:3002/');await login('teacher');await nav('题库与出题');
  // scope to a short question: the seeded bank also carries single-choice items
- await p.locator('article').filter({hasText:'简答'}).getByRole('button',{name:'开放练习',exact:true}).first().click();
+ // dense .data-table rows (c71f6a3), so locate by row text rather than <article>.
+ await p.locator('.data-table > div').filter({hasText:'简答'}).getByRole('button',{name:'开放练习',exact:true}).first().click();
  await p.getByRole('button',{name:'退出',exact:true}).click();
 
  // 1. practice, single choice
