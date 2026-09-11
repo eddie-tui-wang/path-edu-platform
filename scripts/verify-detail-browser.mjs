@@ -64,7 +64,7 @@ try{
  await p.getByRole('button',{name:'查看此记录的对应证据',exact:true}).first().click();await p.waitForTimeout(600);
  await p.getByRole('heading',{name:'差异与原始证据',exact:true}).waitFor();
  await fit('teacher ability record detail');
- await p.getByRole('button',{name:'← 返回维度证据',exact:true}).click();await p.waitForTimeout(600);
+ await p.getByRole('button',{name:'返回维度证据',exact:true}).click();await p.waitForTimeout(600);
  await p.getByRole('heading',{name:/证据集合$/}).waitFor();
  await p.getByRole('button',{name:'返回能力总览',exact:true}).click();await p.waitForTimeout(600);
  await p.getByRole('heading',{name:'能力总览',exact:true}).waitFor();

@@ -143,6 +143,29 @@ html { scroll-padding-bottom:110px; }
 .answer-copilot { margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
 .answer-copilot h3 { margin:0 0 6px; font-size:16px; }
 .answer-copilot textarea { width:100%; min-height:96px; }
+/* Shared dense table: one row per record. Each list declares its own columns via --cols.
+   Same visual language as .teacher-record-table, but not locked to a fixed column count. */
+.data-table { overflow:hidden; border:1px solid var(--border); border-radius:12px; background:var(--surface); }
+.data-table > div { display:grid; grid-template-columns:var(--cols,minmax(0,1fr)); gap:12px; align-items:center; min-height:60px; padding:10px 14px; border-bottom:1px solid var(--border); font-size:var(--type-ui); }
+.data-table > div:last-child { border-bottom:0; }
+.data-table > div.head { min-height:40px; color:var(--muted); background:var(--background); font-size:var(--type-caption); }
+.data-table > div > span:first-child b { display:block; font-weight:600; }
+.data-table > div > span:first-child small { display:block; margin-top:3px; color:var(--muted); font-size:var(--type-caption); }
+.data-table button { justify-self:start; padding:0; border:0; background:transparent; color:var(--primary); font-size:var(--type-ui); }
+.data-table .row-actions { display:flex; gap:10px; justify-self:end; }
+.data-table .row-empty { padding:16px; color:var(--muted); }
+.data-table .row-summary { cursor:pointer; }
+.data-table details { border-bottom:1px solid var(--border); }
+.data-table details:last-child { border-bottom:0; }
+.data-table summary { display:grid; grid-template-columns:var(--cols,minmax(0,1fr)); gap:12px; align-items:center; min-height:60px; padding:10px 14px; font-size:var(--type-ui); cursor:pointer; list-style:none; }
+.data-table summary::-webkit-details-marker { display:none; }
+.data-table summary > span:first-child b { display:block; font-weight:600; }
+.data-table summary > span:first-child small { display:block; margin-top:3px; color:var(--muted); font-size:var(--type-caption); }
+.data-table summary .row-actions { display:flex; gap:10px; justify-self:end; }
+.data-table summary button { padding:0; border:0; background:transparent; color:var(--primary); font-size:var(--type-ui); }
+.data-table .row-detail { display:block; padding:0 14px 14px; color:var(--text); }
+.data-table .row-detail p { margin:6px 0 0; white-space:pre-wrap; overflow-wrap:anywhere; }
+
 .question-bank input[type=radio] { display:inline-block; width:auto; min-height:0; margin:0 8px 0 0; }
 .question-bank label>input[type=checkbox] { display:inline-block; width:auto; min-height:0; margin:0 8px 0 0; }
 .question-bank .account-card { margin-bottom:16px; }
@@ -171,9 +194,14 @@ html { scroll-padding-bottom:110px; }
 .ui-button[aria-pressed=true] { background:var(--primary-soft); font-weight:600; }
 .ui-button-primary[aria-pressed=true] { background:var(--primary); color:white; }
 .admin-layout { grid-template-columns:minmax(0,1fr); }.admin-layout > .edu-sidebar { display:none; }
-.library-workspace { width:100%; min-width:0; }.library-header { display:flex; justify-content:space-between; gap:20px; align-items:center; margin-bottom:24px; }.library-header h1 { margin:0; font-size:28px; }.library-header p { margin:4px 0; color:var(--muted); }
+.library-workspace { width:100%; min-width:0; }/* Page header standard: [← back] [title block] ...... [switches] [actions].
+   Back is always the first child, i.e. the top-left control; scope switches sit on the title row. */
+.library-header { display:flex; justify-content:flex-start; gap:16px; align-items:flex-start; margin-bottom:24px; flex-wrap:wrap; }.library-header h1 { margin:0; font-size:28px; }.library-header p { margin:4px 0; color:var(--muted); }
 .library-tabs,.library-toolbar,.library-detail-actions,.library-pagination { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:20px 0; }
-.library-header-actions { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+.library-header-actions { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-inline-start:auto; }
+/* Back is always the first element of the page header (top-left). The arrow is aria-hidden
+   so the accessible name stays "返回X". */
+.page-back { flex:none; white-space:nowrap; }
 .library-header-actions .library-tabs { margin:0; gap:8px; }
 .library-categories { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }.library-category { border:1px solid var(--border); background:white; border-radius:10px; padding:16px; text-align:left; color:var(--text); }.library-category b,.library-category span { display:block; }.library-category span { font-size:14px; margin-top:6px; color:var(--muted); }.library-category[aria-pressed=true] { border-color:var(--primary); background:var(--primary-soft); }
 .library-toolbar { padding:16px; background:white; border:1px solid var(--border); border-radius:12px; align-items:end; }.library-toolbar label { display:grid; gap:6px; min-width:0; }.library-toolbar label:first-child { flex:1; }.library-toolbar input,.library-toolbar select { padding:10px; border:1px solid var(--border); border-radius:8px; min-width:0; background:white; color:var(--text); }.library-view-toggle { display:flex; gap:6px; }
