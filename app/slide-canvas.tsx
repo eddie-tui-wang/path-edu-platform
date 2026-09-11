@@ -1,7 +1,7 @@
 // Shared slide canvas: pan, zoom, keyboard pan and click-to-mark, reused by the case browser and
 // the exam. Extracted from the ported reader (D-50); marks stay in memory only, as before.
 "use client";
-import {useRef,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import type {MouseEvent,ReactNode} from 'react';
 import {Button} from './ui-button';
 
@@ -9,13 +9,31 @@ export type SlideMark={id:number;type:'rect'|'circle'|'point';x:number;y:number;
 const TOOLS=['平移','缩放','矩形','圆形','点标注','自由笔'];
 const DISABLED:Record<string,string>={自由笔:'自由笔尚未实现',缩放:'请使用下方加减按钮缩放'};
 
-export function SlideCanvas({images,alt,onMarksChange,actions}:{images:string[];alt?:string;onMarksChange?:(marks:SlideMark[])=>void;actions?:ReactNode}) {
+export type SeekRegion={id:string;x:number;y:number};
+
+export function SlideCanvas({images,alt,onMarksChange,actions,focus,regions,activeRegion,visitedRegions}:{images:string[];alt?:string;onMarksChange?:(marks:SlideMark[])=>void;actions?:ReactNode;focus?:{x:number;y:number;zoom:number;token:number}|null;regions?:SeekRegion[];activeRegion?:string|null;visitedRegions?:string[]}) {
   const [index,setIndex]=useState(0),[zoom,setZoom]=useState(1),[offset,setOffset]=useState({x:0,y:0});
   const [tool,setTool]=useState('平移'),[marks,setMarks]=useState<SlideMark[]>([]),[notice,setNotice]=useState('');
   const drag=useRef<{x:number;y:number;ox:number;oy:number}|null>(null);
   const stage=useRef<HTMLDivElement>(null);
+  const transform=useRef<HTMLDivElement>(null);
   const publish=(next:SlideMark[])=>{setMarks(next);onMarksChange?.(next);};
   const reset=()=>{setZoom(1);setOffset({x:0,y:0});};
+  // Guided review: bring an image point to the middle of the viewport at a given zoom. The
+  // transform is applied about the element's own centre, so the offset that centres a point is
+  // derived from the untransformed layout box rather than guessed from the current transform.
+  useEffect(()=>{
+    if(!focus)return;
+    const el=transform.current,canvas=stage.current;
+    if(!el||!canvas)return;
+    const w=el.offsetWidth,h=el.offsetHeight;
+    if(!w||!h)return;
+    const cx=el.offsetLeft+w/2,cy=el.offsetTop+h/2;
+    const px=el.offsetLeft+w*focus.x/100,py=el.offsetTop+h*focus.y/100;
+    setZoom(focus.zoom);
+    setOffset({x:canvas.clientWidth/2-cx-(px-cx)*focus.zoom,y:canvas.clientHeight/2-cy-(py-cy)*focus.zoom});
+  },[focus]);
+
   function addMark(event:MouseEvent<HTMLDivElement>) {
     if(!['矩形','圆形','点标注'].includes(tool)||!stage.current)return;
     const rect=stage.current.getBoundingClientRect();
@@ -46,8 +64,9 @@ export function SlideCanvas({images,alt,onMarksChange,actions}:{images:string[];
       onPointerMove={e=>{if(!drag.current)return;setOffset({x:drag.current.ox+e.clientX-drag.current.x,y:drag.current.oy+e.clientY-drag.current.y});}}
       onPointerUp={()=>{drag.current=null;}}
       onClick={addMark}>
-      <div className="case-viewer-transform" style={{transform:'translate('+offset.x+'px, '+offset.y+'px) scale('+zoom+')'}}>
+      <div ref={transform} className="case-viewer-transform" style={{transform:'translate('+offset.x+'px, '+offset.y+'px) scale('+zoom+')'}}>
         <img src={images[index]} alt={alt||'教学切片'} draggable={false}/>
+        {regions?.map(region=><span key={region.id} className={'seek-mark'+(region.id===activeRegion?' active':'')+(visitedRegions?.includes(region.id)?' done':'')} style={{left:region.x+'%',top:region.y+'%'}}><b>{region.id}</b></span>)}
         {marks.map(mark=><button type="button" key={mark.id} className={'case-viewer-mark case-viewer-mark-'+mark.type} style={{left:mark.x+'%',top:mark.y+'%'}} title={mark.name+' · 约 '+mark.magnification+'×'} onClick={event=>event.stopPropagation()}/>)}
       </div>
     </div>

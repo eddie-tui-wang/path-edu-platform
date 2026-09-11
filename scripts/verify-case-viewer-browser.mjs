@@ -73,6 +73,17 @@ try{
  assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'no page-level horizontal overflow at the desk width');
 
  // students get the same reader without the teacher-only actions
+ // SlideSeek: a scripted guided tour that really re-centres the slide (not just a panel)
+ await p.locator('.viewer-assistant-mode select').selectOption('slideseek');await p.waitForTimeout(600);
+ assert.equal(await p.locator('.seek-mark').count(),5,'every region is marked on the slide');
+ assert.equal(await p.locator('.seek-mark.active').count(),1,'exactly one region is current');
+ assert.match(await p.locator('.seek-intro').innerText(),/不是 AI 判断/,'the tour must say it is scripted, not a model');
+ await p.locator('.seek-round button').nth(2).click();await p.waitForTimeout(700);
+ const centred=await p.evaluate(()=>{const c=document.querySelector('.case-viewer-canvas').getBoundingClientRect(),m=document.querySelectorAll('.seek-mark')[2].getBoundingClientRect();return Math.abs((m.left+m.width/2)-(c.left+c.width/2))<2&&Math.abs((m.top+m.height/2)-(c.top+c.height/2))<2;});
+ assert.ok(centred,'the tour must centre the region it is showing');
+ assert.match(await p.locator('.case-viewer-meta span').first().innerText(),/150%/,'and at that region magnification');
+ await p.getByRole('button',{name:'继续导航',exact:true}).click();await p.waitForTimeout(300);
+
  // the viewer is full-screen, so return to the library before reaching the module chrome
  await p.getByRole('button',{name:'返回图书馆',exact:true}).click();await p.waitForTimeout(600);
  await p.getByRole('button',{name:'退出',exact:true}).click();await p.waitForTimeout(600);

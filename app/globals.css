@@ -342,6 +342,42 @@ html { scroll-padding-bottom:110px; }
 .viewer-assistant-foot .ui-button { min-height:34px; padding:5px 10px; }
 .viewer-assistant-fab { position:absolute; right:20px; bottom:20px; z-index:4; display:flex; align-items:center; gap:8px; padding:10px 16px; border:0; border-radius:999px; color:#fff; background:var(--primary); box-shadow:0 6px 20px rgba(0,0,0,.18); cursor:pointer; }
 .viewer-assistant-fab span { display:grid; place-items:center; width:24px; height:24px; border-radius:50%; background:rgba(255,255,255,.22); font-size:12px; font-weight:800; }
+/* offsetLeft is measured against the offsetParent, so the canvas has to be positioned for the
+   guided-review centring maths to be correct. */
+.case-viewer-canvas { position:relative; }
+/* SlideSeek guided review — panel ported from the prototype, recoloured to brand green. The
+   route is a fixed reading routine: low power first, then high power. It never says what the
+   tissue shows, because no model is connected (D-F02). */
+.seek-panel { flex:1; display:grid; gap:12px; align-content:start; overflow-y:auto; }
+.seek-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+.seek-head h3 { margin:0; font-size:var(--type-ui); }
+.seek-head p { margin:2px 0 0; color:var(--muted); font-size:var(--type-caption); }
+.seek-head .ui-button { min-height:32px; padding:4px 10px; }
+.seek-intro { margin:0; color:var(--muted); font-size:var(--type-caption); }
+.seek-round { border:1px solid var(--border); border-radius:10px; padding:10px; }
+.seek-round > header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.seek-round > header b { font-size:var(--type-ui); }
+.seek-round > header span { color:var(--muted); font-size:var(--type-caption); }
+.seek-round > div { display:grid; gap:6px; }
+.seek-round button { display:flex; align-items:center; gap:8px; padding:6px 8px; border:1px solid var(--border); border-radius:8px; background:white; color:var(--text); text-align:left; cursor:pointer; font-size:var(--type-caption); }
+.seek-round button i { display:grid; place-items:center; width:26px; height:20px; border-radius:5px; background:var(--primary-soft); color:var(--primary-strong); font-style:normal; font-weight:700; }
+.seek-round button.active { border-color:var(--primary); background:var(--primary-soft); }
+.seek-round button.done { border-color:var(--primary-soft); color:var(--muted); }
+.seek-current { border:1px solid var(--primary); border-radius:10px; padding:10px; background:var(--primary-soft); }
+.seek-current header { display:flex; align-items:center; gap:8px; }
+.seek-current header > span { display:grid; place-items:center; width:28px; height:22px; border-radius:5px; background:var(--primary); color:#fff; font-weight:700; font-size:var(--type-caption); }
+.seek-current header b { display:block; font-size:var(--type-ui); }
+.seek-current header small { display:block; color:var(--muted); font-size:var(--type-caption); }
+.seek-current p { margin:8px 0; }
+.seek-current > div { display:flex; align-items:center; gap:6px; color:var(--primary-strong); font-size:var(--type-caption); }
+.seek-current > div i { width:8px; height:8px; border-radius:50%; background:var(--primary); }
+.seek-summary { border:1px solid var(--border); border-radius:10px; padding:10px; }
+.seek-summary b { display:block; margin-bottom:6px; }
+.seek-summary p { margin:0; color:var(--muted); }
+.seek-mark { position:absolute; width:64px; height:48px; transform:translate(-50%,-50%); border:2px solid rgba(0,124,87,.45); border-radius:6px; opacity:.3; transition:opacity .3s, box-shadow .3s, border-color .3s; }
+.seek-mark b { position:absolute; left:-2px; top:-20px; padding:2px 6px; border-radius:4px 4px 0 0; background:var(--primary); color:#fff; font-size:var(--type-caption); }
+.seek-mark.active { opacity:1; border-color:var(--primary); box-shadow:0 0 0 4px rgba(0,124,87,.16); }
+.seek-mark.done { opacity:.6; }
 .exam-mode-left { border-right:1px solid var(--border); }
 .exam-mode-right { border-left:1px solid var(--border); display:flex; flex-direction:column; gap:12px; }
 .exam-mode-left h2,.exam-mode-right h2 { margin:0; font-size:18px; }
