@@ -22,7 +22,10 @@ test("migration is independent and clearly identifies demo boundaries", () => {
   const teacher=readFileSync(new URL('../app/teacher-ability-module.tsx',import.meta.url),'utf8');
   assert.match(teacher,/录音分析示例 · 预设结果/);
   assert.match(teacher,/无真实音频/);
-  assert.match(wrapper,/账号服务 · 教学演示/);
+  // The demo-boundary warning used to sit in a banner on every page. It was removed as visual
+  // noise on 2026-09-11 and the guarantee moved to the demo help article, so this assertion now
+  // guards that surface instead. The sentence still matters: image import is a real path.
+  assert.match(wrapper,/数据库故障不会自动进入演示模式/);
   assert.match(wrapper,/LibraryWorkspace/);
   assert.doesNotMatch(wrapper,/<nav aria-label="账号授权导航"/);
   assert.match(wrapper,/不采集真实音频/);

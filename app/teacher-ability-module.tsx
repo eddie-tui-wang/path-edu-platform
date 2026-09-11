@@ -97,7 +97,7 @@ export function TeacherAbilityModule({ onBack, initialView="overview" }: { onBac
   }
 
   return <section className="teacher-ability">
-    <header className="library-header"><div><p className="account-eyebrow">教师教学</p><h1>{view === "overview" ? "能力总览" : "教学记录"}</h1><span className="library-tag">示例</span></div>{view==="records"&&<div className="question-actions"><Button onClick={()=>{setSourceView("records");setSourceDimension("");setView("choose");}}>开展教学阅片</Button><Button variant="primary" onClick={showRecordingSample}>录音分析（示例）</Button></div>}</header>
+    <header className="library-header"><div><h1>{view === "overview" ? "能力总览" : "教学记录"}</h1><span className="library-tag">示例</span></div>{view==="records"&&<div className="question-actions"><Button onClick={()=>{setSourceView("records");setSourceDimension("");setView("choose");}}>开展教学阅片</Button><Button variant="primary" onClick={showRecordingSample}>录音分析（示例）</Button></div>}</header>
 
     {view === "overview" ? <>
       <div className="teacher-prerequisite"><b>能力结论以证据为先</b><span>评价规则待确认，先回看教学证据和改进建议。</span></div>
