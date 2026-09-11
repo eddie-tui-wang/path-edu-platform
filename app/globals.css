@@ -143,6 +143,13 @@ html { scroll-padding-bottom:110px; }
 .answer-copilot { margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
 .answer-copilot h3 { margin:0 0 6px; font-size:16px; }
 .answer-copilot textarea { width:100%; min-height:96px; }
+.dimension-list { display:grid; gap:12px; margin:16px 0; }
+.dimension-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; cursor:pointer; }
+.dimension-head small { color:var(--muted); font-size:var(--type-caption); }
+.dimension-evidence { margin:10px 0 0; padding-inline-start:18px; }
+.dimension-evidence li { margin-bottom:8px; }
+.dimension-evidence b { font-weight:600; }
+.dimension-evidence small { display:block; margin-top:2px; color:var(--muted); font-size:var(--type-caption); }
 /* Shared dense table: one row per record. Each list declares its own columns via --cols.
    Same visual language as .teacher-record-table, but not locked to a fixed column count. */
 .data-table { overflow:hidden; border:1px solid var(--border); border-radius:12px; background:var(--surface); }
