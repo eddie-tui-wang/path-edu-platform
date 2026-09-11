@@ -14,11 +14,12 @@ try {
   await page.goto(process.env.DEMO_URL || 'http://localhost:3002/');
   for(const role of ['student','teacher','admin']) {
     await login('demo_'+role,'Demo2026!'+role);
-    await page.getByText('无数据库演示版',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'退出',exact:true}).waitFor();
     await page.getByRole('button',{name:'退出',exact:true}).click();
   }
   await login('demo_admin','Demo2026!admin');
-  const form=page.locator('form');
+  await page.getByRole('button',{name:'新增账号',exact:true}).click();
+  const form=page.locator('dialog form');
   await form.locator('[name=username]').fill('demo_check');
   await form.locator('[name=displayName]').fill('浏览器验收');
   await form.locator('[name=role]').selectOption('student');
@@ -27,7 +28,7 @@ try {
   await page.getByText('demo_check',{exact:true}).waitFor();
   await page.reload();
   await login('demo_check','Testing2026!demo');
-  await page.getByText('无数据库演示版',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'退出',exact:true}).waitFor();
   await page.getByRole('button',{name:'退出',exact:true}).click();
   await login('demo_admin','Demo2026!admin');
   await page.getByRole('row').filter({hasText:'demo_check'}).getByRole('button',{name:'停用',exact:true}).click();
