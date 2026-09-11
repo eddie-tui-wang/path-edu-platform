@@ -114,16 +114,16 @@ try{
  await p.getByRole('button',{name:/开始练习|查看本次作答/}).first().click();await p.waitForTimeout(700);
  await p.getByRole('heading',{name:/日常练习 · 作答/}).waitFor();
  await fit('student practice detail');
- // Wide layout shows the three panels side by side; below 1100px they collapse into tabs.
- if(await p.locator('.practice-tabs').isVisible()){
-  for(const tab of ['图片','临床资料','作答与解析']){
-   await p.getByRole('button',{name:tab,exact:true}).click();await p.waitForTimeout(250);await fit('student practice '+tab);
-   assert.ok(await p.getByRole('button',{name:tab,exact:true}).getAttribute('aria-pressed')==='true',tab+' tab must become the selected panel');
-  }
- }else{
-  assert.equal(await p.locator('.practice-columns > *').count(),3,'wide layout keeps history/image/answer side by side');
-  assert.equal(await p.getByRole('button',{name:'提交本题',exact:true}).count(),1,'the answer action stays reachable in the wide layout');
- }
+ // Answering desk: a fixed slide stage flanked by rails. The tab mechanism was dropped with D-49.
+ assert.equal(await p.locator('.answer-layout > *').count(),3,'the desk keeps history, slide and answer as three columns');
+ assert.equal(await p.getByRole('button',{name:'提交本题',exact:true}).count(),1,'the answer action stays reachable on the desk');
+ const cols=await p.evaluate(()=>{const w=s=>Math.round(document.querySelector(s).getBoundingClientRect().width);return {left:w('.answer-rail-left'),stage:w('.library-reader'),answer:w('.answer-rail-main')};});
+ assert.ok(cols.stage>cols.answer&&cols.stage>cols.left,'the slide must stay the widest column, got '+JSON.stringify(cols));
+ await p.getByRole('button',{name:'隐藏临床资料',exact:true}).click();await p.waitForTimeout(250);
+ assert.equal(await p.evaluate(()=>Math.round(document.querySelector('.answer-rail-left').getBoundingClientRect().width)),0,'the case rail collapses');
+ await fit('student practice rail collapsed');
+ await p.getByRole('button',{name:'显示临床资料',exact:true}).click();await p.waitForTimeout(250);
+ assert.ok(await p.evaluate(()=>document.querySelector('.answer-rail-left').getBoundingClientRect().width)>0,'the case rail comes back');
  console.log('Screenshot:',await shot(zoom?'student practice 200':'student practice'));
  await p.getByRole('button',{name:'返回练习列表',exact:true}).click();await p.waitForTimeout(600);
  await p.getByRole('heading',{name:'日常练习',exact:true}).waitFor();

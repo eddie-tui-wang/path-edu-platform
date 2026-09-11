@@ -1,5 +1,6 @@
 "use client";
 import {useEffect,useRef,useState} from 'react';
+import type {ReactNode} from 'react';
 import type {Account} from './account-client';
 import PublishingWorkspace from './publishing-workspace';
 import {CaseViewer} from './case-viewer';
@@ -58,7 +59,7 @@ export default function LibraryWorkspace({user,onCreateQuestion}:{user:Account;o
   </section>;
 }
 
-export function ImageReader({images,stateKey}:{images:string[];stateKey?:string}) {
+export function ImageReader({images,stateKey,toolbar}:{images:string[];stateKey?:string;toolbar?:ReactNode}) {
   const [index,setIndex]=useState(0),[zoom,setZoom]=useState(1),[offset,setOffset]=useState({x:0,y:0}),[failed,setFailed]=useState(false);
   const [loadedKey,setLoadedKey]=useState<string|undefined>(undefined),[viewError,setViewError]=useState('');
   const imageSignature=JSON.stringify(images);
@@ -66,7 +67,7 @@ export function ImageReader({images,stateKey}:{images:string[];stateKey?:string}
   useEffect(()=>{if(!stateKey||loadedKey!==stateKey+imageSignature)return;try{sessionStorage.setItem(stateKey,JSON.stringify({images:imageSignature,index,zoom,offset}));setViewError('');}catch{setViewError('视野未保存，答卷内容不受影响');}},[stateKey,loadedKey,imageSignature,index,zoom,offset]);
   const dragging=useRef<{x:number;y:number;ox:number;oy:number}|null>(null);
   const reset=()=>{setZoom(1);setOffset({x:0,y:0});};
-  return <section className="account-card library-reader">{viewError&&<p role="status">{viewError}</p>}<header><h2>图片阅览</h2><span>{index+1} / {images.length}</span></header><div className="library-thumbnails">{images.map((src,i)=><button aria-label={'查看图片 '+(i+1)} aria-pressed={index===i} key={i} onClick={()=>{setIndex(i);setFailed(false);reset();}}><img src={src} alt={'图片 '+(i+1)}/></button>)}</div>
+  return <section className="account-card library-reader">{viewError&&<p role="status">{viewError}</p>}<header><h2>图片阅览</h2><span>{index+1} / {images.length}</span>{toolbar&&<div className="library-reader-tools">{toolbar}</div>}</header><div className="library-thumbnails">{images.map((src,i)=><button aria-label={'查看图片 '+(i+1)} aria-pressed={index===i} key={i} onClick={()=>{setIndex(i);setFailed(false);reset();}}><img src={src} alt={'图片 '+(i+1)}/></button>)}</div>
     <div className="library-viewport" tabIndex={0} aria-label="图片阅览区域，可拖拽或方向键平移" onKeyDown={e=>{const delta:Record<string,[number,number]>={ArrowLeft:[30,0],ArrowRight:[-30,0],ArrowUp:[0,30],ArrowDown:[0,-30]};if(delta[e.key]){e.preventDefault();setOffset(v=>({x:v.x+delta[e.key][0],y:v.y+delta[e.key][1]}));}}} onPointerDown={e=>{dragging.current={x:e.clientX,y:e.clientY,ox:offset.x,oy:offset.y};e.currentTarget.setPointerCapture(e.pointerId);}} onPointerMove={e=>{const d=dragging.current;if(d)setOffset({x:d.ox+e.clientX-d.x,y:d.oy+e.clientY-d.y});}} onPointerUp={()=>{dragging.current=null;}} onPointerCancel={()=>{dragging.current=null;}}>
       {failed?<p role="alert">图片无法加载，请选择其他图片。</p>:<img src={images[index]} alt={'病例图片 '+(index+1)} draggable={false} style={{transform:`translate(${offset.x}px,${offset.y}px) scale(${zoom})`}} onError={()=>setFailed(true)}/>}
     </div><footer><Button aria-label="缩小图片" disabled={zoom<=.5} onClick={()=>setZoom(z=>Math.max(.5,z-.25))}>−</Button><span>{Math.round(zoom*100)}%</span><Button aria-label="放大图片" disabled={zoom>=4} onClick={()=>setZoom(z=>Math.min(4,z+.25))}>＋</Button><Button onClick={reset}>复位视野</Button></footer>
