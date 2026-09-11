@@ -1,6 +1,7 @@
 # Development preferences
 
-- For every frontend change, read `docs/design-system/交互与UI原则.md` first; use `docs/design-system/师生端设计审计_20260910.md` as the design-debt checklist. Update evidence/status after verification, not merely after compilation.
+- All project documents live under `docs/`; start at `docs/README.md`, the single document entry point. Put new project documents in the matching `docs/` category folder and register them there.
+- For every frontend change, read `docs/05_设计系统/交互与UI原则.md` first; use `docs/05_设计系统/师生端设计审计.md` as the design-debt checklist. Update evidence/status after verification, not merely after compilation.
 - Keep page actions separate from filters. Recording belongs only to teaching records. Root pages do not need back buttons; record details do. Never add duplicate summary/status cards without clear scope and traceable evidence.
 - Use shared controls and concise copy; retain meaningful failure, data-loss and simulation provenance information. Check large option sets, keyboard access, narrow layouts and unsaved-data behavior before reporting completion.
 
