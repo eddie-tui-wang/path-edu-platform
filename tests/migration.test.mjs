@@ -17,12 +17,15 @@ test("preview navigation validates inputs and changes the same selected view", (
 
 test("migration is independent and clearly identifies demo boundaries", () => {
   const wrapper=readFileSync(new URL("../app/teaching-platform.tsx",import.meta.url),"utf8");
-  assert.match(wrapper,/演示数据／功能待接入/);
+  assert.match(wrapper,/仅使用模拟资料，请勿上传患者信息/);
+  assert.doesNotMatch(wrapper,/className="edu-teacher-notice"/);
+  const teacher=readFileSync(new URL('../app/teacher-ability-module.tsx',import.meta.url),'utf8');
+  assert.match(teacher,/录音分析示例 · 预设结果/);
+  assert.match(teacher,/无真实音频/);
   assert.match(wrapper,/账号服务 · 教学演示/);
   assert.match(wrapper,/LibraryWorkspace/);
   assert.doesNotMatch(wrapper,/<nav aria-label="账号授权导航"/);
-  assert.match(wrapper,/不会采集麦克风/);
-  const teacher=readFileSync(new URL("../app/teacher-ability-module.tsx",import.meta.url),"utf8");
+  assert.match(wrapper,/不采集真实音频/);
   assert.doesNotMatch(teacher,/getUserMedia|MediaRecorder/);
   assert.match(teacher,/非真实录音同步回放/);
   const student=readFileSync(new URL("../app/teaching-module.tsx",import.meta.url),"utf8");

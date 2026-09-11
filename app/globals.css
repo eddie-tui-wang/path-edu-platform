@@ -186,6 +186,8 @@ html { scroll-padding-bottom:110px; }
 .edu-workspace select:hover:not(:disabled),.select-trigger:hover { border-color:var(--primary); }
 .edu-workspace :is(select,input,textarea,button):focus-visible { outline:2px solid var(--primary); outline-offset:3px; }
 .edu-workspace select:disabled { opacity:.55; cursor:not-allowed; }
+.edu-workspace select[aria-invalid=true] { border-color:var(--danger,#b42318); }
+.select-trigger[aria-expanded=true] { border-color:var(--primary); background:var(--primary-soft); }
 .search-select { position:relative; display:grid; gap:6px; min-width:180px; max-width:320px; flex:1; }
 .select-trigger { min-height:44px; width:100%; display:flex; justify-content:space-between; gap:12px; text-align:left; }
 .select-trigger>span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
