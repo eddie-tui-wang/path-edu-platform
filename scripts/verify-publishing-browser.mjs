@@ -23,7 +23,7 @@ try{
  await p.getByText('已发放，可切换指定学生查看',{exact:true}).waitFor();
  await p.getByRole('button',{name:'退出',exact:true}).click();await login('student');await nav('考试中心');
  assert.ok(await p.getByText('隔离发布验收卷',{exact:true}).count());
- await p.locator('article').filter({hasText:'隔离发布验收卷'}).getByRole('button',{name:'开始考试',exact:true}).click();await p.getByRole('button',{name:'确认开始',exact:true}).click();
+ await p.locator('.exam-card').filter({hasText:'隔离发布验收卷'}).getByRole('button',{name:'开始考试',exact:true}).click();await p.getByRole('button',{name:'确认开始',exact:true}).click();
  assert.equal(await p.getByText('AI追问',{exact:true}).count(),0);
  // exam draft write failure: surface it, keep the answer, and never claim it saved
  await p.evaluate(()=>{window.origAttemptSet=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k.startsWith('path-edu-exam-attempts-v1'))throw new DOMException('测试：答卷写入失败','QuotaExceededError');return window.origAttemptSet.call(this,k,v);};});
@@ -51,8 +51,13 @@ try{
  await p.getByRole('button',{name:'保存复核结果',exact:true}).first().click();
  await p.getByRole('button',{name:'发布整场成绩',exact:true}).click();await p.getByRole('button',{name:'确认发布成绩',exact:true}).click();await p.getByText('成绩已发布给相应学生',{exact:true}).waitFor();
  await p.getByRole('button',{name:'退出',exact:true}).click();await login('student');await nav('考试中心');
- await p.getByRole('heading',{name:'成绩已发布 · 8分',exact:true}).waitFor();await p.getByText('教师点评：流程测试点评',{exact:true}).waitFor();
- assert.equal(await p.locator('main article').count(),10);
+ await p.getByRole('heading',{name:'成绩已发布 · 8分',exact:true}).waitFor();
+ // The result page now renders the comment as a labelled block rather than one sentence.
+ await p.locator('.result-questions details summary').first().click();await p.waitForTimeout(300);
+ const comment=p.locator('.result-comment').first();await comment.waitFor();
+ assert.match(await comment.innerText(),/教师点评/,'the comment block keeps its label');
+ assert.match(await comment.innerText(),/流程测试点评/,'the teacher comment is shown to the student');
+ assert.equal(await p.locator('.result-questions li').count(),10,'every question appears once on the result sheet');
 
  // --- second pass: a mixed paper (short + single) must publish, render both controls,
  // --- auto-score the single and require a manual mark for the answered short
@@ -74,7 +79,7 @@ try{
  // the workspace resumes the previous attempt, so leave its result view before choosing another paper
  const back=p.getByRole('button',{name:'返回考试列表',exact:true});
  if(await back.count())await back.click();
- const mixed=p.locator('article').filter({hasText:'混合卷验收'});
+ const mixed=p.locator('.exam-card').filter({hasText:'混合卷验收'});
  await mixed.getByRole('button',{name:'开始考试',exact:true}).click();await p.getByRole('button',{name:'确认开始',exact:true}).click();
  // question 1 is one of the shorts, the single was appended last
  await p.getByRole('textbox',{name:'考试简答答案',exact:true}).fill('混合卷简答作答');
@@ -95,7 +100,8 @@ try{
 
  await p.getByRole('button',{name:'退出',exact:true}).click();await login('student');await nav('考试中心');
  await p.getByRole('heading',{name:/成绩已发布 · \d+分/}).waitFor();
- assert.equal(await p.locator('main article').count(),11,'a mixed paper must return all 11 questions');
+ assert.equal(await p.locator('.result-questions li').count(),11,'a mixed paper must return all 11 questions');
+ await p.locator('.result-questions details summary').first().click();await p.waitForTimeout(300);
  await p.getByText('混合卷简答作答').first().waitFor();
  console.log('PASS: ten-image and mixed publication, assigned student starts/submits, exam-draft and grading write failure with input protection, grade hidden before release, released score and feedback visible.');
 }finally{await browser.close();}

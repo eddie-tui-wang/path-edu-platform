@@ -22,7 +22,7 @@ try{
  assert.ok(await p.getByRole('button',{name:'平移',exact:true}).getAttribute('aria-pressed')==='true','pan is the default tool');
 
  // the case-info rail uses the ported accordion and keeps every current field
- const summaries=(await p.locator('.case-viewer-info summary').allTextContents()).map(s=>s.trim());
+ const summaries=(await p.locator('.viewer-mode-left summary').allTextContents()).map(s=>s.trim());
  for(const name of ['主诉','现病史','既往史','检查结果','送检信息','资料来源'])assert.ok(summaries.includes(name),name);
  assert.ok(summaries.some(s=>s.startsWith('本次标注')),'the mark list lives in the rail');
 
@@ -41,12 +41,12 @@ try{
  }
  assert.equal(await p.locator('.case-viewer-mark').count(),3);
  // the mark list lives inside a closed <details>: open it the way a user would
- const markRail=p.locator('.case-viewer-info details').last();
+ const markRail=p.locator('.case-viewer-marks-panel');
  assert.equal(await markRail.getAttribute('open'),null,'the mark rail starts collapsed');
  await markRail.locator('summary').click();
  assert.match(await p.locator('.case-viewer-marks li').first().innerText(),/关键视野 01/,'marks are listed in the rail');
  assert.match(await p.locator('.case-viewer-marks li').first().innerText(),/20×/,'a mark records the magnification it was taken at');
- assert.match(await p.locator('.case-viewer-info').innerText(),/仅在本次浏览中保留/,'the rail must say marks are not persisted');
+ assert.match(await p.locator('.viewer-mode-left').innerText(),/仅在本次浏览中保留/,'the rail must say marks are not persisted');
  const stacked=await p.locator('.case-viewer-mark').count();
  await p.locator('.case-viewer-mark').first().click();
  assert.equal(await p.locator('.case-viewer-mark').count(),stacked,'clicking an existing mark selects it instead of stacking a new one');
@@ -68,11 +68,13 @@ try{
  assert.equal(await tx(),0,'reset also restores the pan offset');
 
  // the stage stays the focal point, and the desk layout must not overflow
- const ratio=await p.evaluate(()=>{const a=document.querySelector('.case-viewer-canvas').getBoundingClientRect(),b=document.querySelector('.case-viewer-info').getBoundingClientRect();return (a.width*a.height)/(b.width*b.height);});
+ const ratio=await p.evaluate(()=>{const a=document.querySelector('.case-viewer-canvas').getBoundingClientRect(),b=document.querySelector('.viewer-mode-left').getBoundingClientRect();return (a.width*a.height)/(b.width*b.height);});
  assert.ok(ratio>1.5,'the slide stage must dominate its information rail (was '+ratio.toFixed(2)+')');
  assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'no page-level horizontal overflow at the desk width');
 
  // students get the same reader without the teacher-only actions
+ // the viewer is full-screen, so return to the library before reaching the module chrome
+ await p.getByRole('button',{name:'返回图书馆',exact:true}).click();await p.waitForTimeout(600);
  await p.getByRole('button',{name:'退出',exact:true}).click();await p.waitForTimeout(600);
  await open('student');
  assert.equal(await p.locator('.case-viewer-tools button').count(),6,'students get the same reader');

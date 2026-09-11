@@ -55,6 +55,8 @@ try{
  await p.getByRole('heading',{name:'临床资料',exact:true}).waitFor();
  assert.match(await hash(),/libraryCase=library-demo-01/,'reload must restore the library detail route');
  console.log('library detail restored after reload');
+ // The library viewer is full-screen and covers the sidebar, so leave it before navigating away.
+ await p.getByRole('button',{name:'返回图书馆',exact:true}).click();await p.waitForTimeout(600);
 
  // --- ability detail: evidence set -> record evidence -> back
  await nav('能力分析');
@@ -100,7 +102,7 @@ try{
 
  // --- student: every module, library detail, practice detail with panel switching
  await login('student');
- for(const name of ['日常练习','考试中心','切片图书馆','学习记录','错题集','能力分析']){await nav(name);await fit('student '+name);}
+ for(const name of ['考试中心','切片图书馆','学习记录','错题集']){await nav(name);await fit('student '+name);}
 
  await nav('切片图书馆');
  await p.getByRole('button',{name:'查看病例'}).first().click();await p.waitForTimeout(600);
@@ -110,7 +112,8 @@ try{
  await p.getByRole('button',{name:'返回图书馆',exact:true}).click();await p.waitForTimeout(600);
  await p.getByRole('heading',{name:'切片图书馆',exact:true}).waitFor();
 
- await nav('日常练习');
+ // 日常练习 已从学生导航移除（2026-09-11）；路由仍有效，改用深链进入。
+ await p.evaluate(()=>{location.hash='#role=student&page=practice';window.dispatchEvent(new PopStateEvent('popstate'));});await p.waitForTimeout(700);
  await p.getByRole('button',{name:/开始练习|查看本次作答/}).first().click();await p.waitForTimeout(700);
  await p.getByRole('heading',{name:/日常练习 · 作答/}).waitFor();
  await fit('student practice detail');
@@ -129,5 +132,5 @@ try{
  await p.getByRole('heading',{name:'日常练习',exact:true}).waitFor();
 
  assert.deepEqual(errors,[],'no uncaught page errors expected');
- console.log('PASS: teacher+student 11 modules, library/ability/record/practice detail routes, hash restore after reload, browser back/forward, panel switching, no horizontal overflow'+(zoom?', native 200% zoom':''));
+ console.log('PASS: teacher 5 + student 4 modules, library/ability/record/practice detail routes, hash restore after reload, browser back/forward, panel switching, no horizontal overflow'+(zoom?', native 200% zoom':''));
 }finally{await context.close();}

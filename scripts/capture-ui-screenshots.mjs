@@ -60,7 +60,8 @@ await step('T5-ability', async () => { await nav('能力分析'); });
 await logout();
 
 await login('student');
-await step('S1-practice-list', async () => { await nav('日常练习'); });
+// 日常练习 已从学生导航移除；路由仍有效，深链进入。
+await step('S1-practice-list', async () => { await p.evaluate(() => { location.hash = '#role=student&page=practice'; window.dispatchEvent(new PopStateEvent('popstate')); }); });
 await step('S1b-practice-desk', async () => { await p.getByRole('button', {name: /开始|继续/}).first().click(); });
 await step('S2-exam-center', async () => { await nav('考试中心'); });
 await step('S3-library-list', async () => { await nav('切片图书馆'); });

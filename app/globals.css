@@ -228,7 +228,133 @@ html { scroll-padding-bottom:110px; }
 /* A control without a caption must line up with the other controls, not with their caption+control
    groups: centring on the group left 清空筛选 16px above the select. Giving the clear button the same
    caption+control grid as the labelled fields aligns their control rows exactly (2026-09-11). */
-.library-toolbar-slot { display:grid; gap:6px; }.library-toolbar label { display:grid; gap:6px; min-width:0; }.library-toolbar label:first-child { flex:1; }.library-toolbar input,.library-toolbar select { padding:10px; border:1px solid var(--border); border-radius:8px; min-width:0; background:white; color:var(--text); }.library-view-toggle { display:flex; gap:6px; }
+.library-toolbar-slot { display:grid; gap:6px; }
+/* Exam centre as a card grid. minmax(272px,1fr) yields four columns in the 1184px content
+   area (4x272 + 3x16 = 1136) and falls back to three on a narrower window, so the count
+   follows the viewport instead of being hard-coded per breakpoint (2026-09-11). */
+.exam-card-grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fill,minmax(272px,1fr)); align-items:stretch; }
+.exam-card { display:flex; flex-direction:column; gap:10px; padding:18px; background:var(--surface); border:1px solid var(--border); border-radius:12px; min-width:0; }
+.exam-card header { display:flex; flex-direction:column; gap:8px; align-items:flex-start; min-width:0; }
+.exam-card h2 { margin:0; font-size:18px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.exam-card p { margin:0; color:var(--muted); font-size:var(--type-ui); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.exam-card footer { margin-top:auto; padding-top:4px; }
+/* Exam result as a marked paper: a score header, an answer-card strip so the whole script is
+   visible at a glance, then one collapsed entry per question with the student's answer beside
+   the reference. Colours reuse the existing semantic pairs, no new tokens (2026-09-11). */
+.result-sheet { display:grid; gap:16px; }
+.result-summary { display:flex; align-items:center; gap:28px; flex-wrap:wrap; padding:20px 24px; background:var(--surface); border:1px solid var(--border); border-radius:12px; }
+.result-status { margin:0; font-size:28px; color:var(--primary-strong); }
+.result-total span { color:var(--muted); font-size:var(--type-ui); }
+.result-total b { font-size:44px; line-height:1; color:var(--primary-strong); font-variant-numeric:tabular-nums; }
+.result-total small { color:var(--muted); font-size:var(--type-ui); }
+.result-facts { display:grid; grid-template-columns:repeat(4,auto); gap:10px 30px; margin:0; }
+.result-facts dt { color:var(--muted); font-size:var(--type-caption); }
+.result-facts dd { margin:2px 0 0; font-variant-numeric:tabular-nums; }
+.result-legend { display:flex; gap:16px; margin-inline-start:auto; font-size:var(--type-ui); color:var(--muted); }
+.result-legend span::before { content:''; display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:6px; }
+.result-legend .is-full::before { background:var(--primary); }
+.result-legend .is-part::before { background:#e79b3e; }
+.result-legend .is-zero::before { background:#a42632; }
+.result-legend .is-empty::before { background:var(--border); }
+.result-pending { margin:0; color:var(--muted); }
+.result-card { display:flex; flex-wrap:wrap; gap:8px; padding:14px 16px; background:var(--surface); border:1px solid var(--border); border-radius:12px; }
+.result-card button { width:40px; height:40px; padding:0; border-radius:8px; border:1px solid var(--border); background:white; color:var(--text); font-variant-numeric:tabular-nums; cursor:pointer; }
+.result-card button.is-full { border-color:var(--primary); background:var(--primary-soft); color:var(--primary-strong); font-weight:700; }
+.result-card button.is-part { border-color:#e79b3e; background:#fff7eb; color:#9b692c; }
+.result-card button.is-zero { border-color:#e5b8bf; background:#fff0f0; color:#a42632; }
+.result-card button.is-empty { border-style:dashed; color:var(--muted); }
+.result-questions { list-style:none; margin:0; padding:0; display:grid; gap:10px; }
+.result-questions li { background:var(--surface); border:1px solid var(--border); border-radius:12px; }
+.result-questions summary { display:grid; grid-template-columns:76px minmax(0,1fr) 88px; align-items:center; gap:12px; padding:14px 18px; cursor:pointer; list-style:none; }
+.result-questions summary::-webkit-details-marker { display:none; }
+.result-q-no { color:var(--muted); font-size:var(--type-ui); }
+.result-q-prompt { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.result-q-flag { font-style:normal; margin-right:8px; padding:2px 7px; border-radius:5px; background:var(--primary-soft); color:var(--primary-strong); font-size:var(--type-caption); }
+.result-q-score { text-align:right; font-size:20px; font-weight:700; color:var(--primary-strong); font-variant-numeric:tabular-nums; }
+.result-q-score i { font-style:normal; font-size:var(--type-ui); font-weight:400; color:var(--muted); }
+.result-questions li.is-zero { border-color:#e5b8bf; }
+.result-questions li.is-zero .result-q-score { color:#a42632; }
+.result-questions li.is-part .result-q-score { color:#9b692c; }
+.result-questions li.is-empty .result-q-score { color:var(--muted); }
+.result-pair { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; padding:0 18px 4px; }
+.result-pair h4 { margin:0 0 6px; font-size:var(--type-ui); color:var(--muted); font-weight:600; }
+.result-pair p { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; }
+.result-explain { margin:0; padding:12px 18px 0; color:var(--muted); }
+.result-comment { margin:12px 18px 16px; padding:10px 12px; border-left:3px solid var(--primary-soft); background:var(--background); border-radius:0 8px 8px 0; white-space:pre-wrap; }
+.result-comment b { display:block; color:var(--primary-strong); font-size:var(--type-caption); margin-bottom:4px; }
+/* Full-screen exam mode. It covers the viewport deliberately: leaving the module chrome visible
+   would make the exam read like browsing, and the point is a context switch into an exam state.
+   History left, slide centre, answer right, answer card in the footer (2026-09-11). */
+.exam-mode { position:fixed; inset:0; z-index:60; display:grid; grid-template-rows:auto minmax(0,1fr) auto; background:var(--background); }
+.exam-mode-bar { display:flex; align-items:center; gap:24px; padding:12px 24px; background:var(--primary); color:#fff; }
+.exam-mode-title { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.exam-mode-title b { font-size:18px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.exam-mode-title small { color:#d6ece3; font-size:var(--type-caption); }
+.exam-mode-timer { margin:0; margin-inline-start:auto; font-variant-numeric:tabular-nums; }
+.exam-mode-actions { display:flex; gap:10px; align-items:center; }
+.exam-mode-actions .ui-button { background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.5); color:#fff; }
+.exam-mode-actions .ui-button-primary { background:#fff; border-color:#fff; color:var(--primary-strong); }
+.exam-mode-body,.viewer-mode-body { display:grid; grid-template-columns:280px minmax(0,1fr) 380px; min-height:0; }
+.exam-mode-body { grid-template-columns:280px minmax(0,1fr) 380px; }
+.exam-mode-left,.exam-mode-right,.viewer-mode-left,.viewer-mode-center { overflow-y:auto; padding:18px 20px; background:var(--surface); min-width:0; }
+.viewer-mode-center { position:relative; padding:0; overflow:hidden; background:var(--primary-soft); display:grid; grid-template-rows:minmax(0,1fr); }
+/* Library browsing uses the same full-screen shell as the exam, so both feel like one product. */
+.viewer-mode { position:fixed; inset:0; z-index:60; display:grid; grid-template-rows:auto minmax(0,1fr); background:var(--background); }
+.viewer-mode-bar { display:flex; align-items:center; gap:16px; padding:12px 24px; background:var(--surface); border-bottom:1px solid var(--border); }
+.viewer-mode-title { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.viewer-mode-title b { font-size:18px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.viewer-mode-title small { color:var(--muted); font-size:var(--type-caption); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.viewer-mode-actions { display:flex; gap:10px; align-items:center; margin-inline-start:auto; }
+.viewer-mode-left dl { margin:0 0 12px; }
+.viewer-mode-left dt { color:var(--muted); font-size:var(--type-caption); }
+.viewer-mode-left dd { margin:2px 0 8px; }
+.viewer-mode-left details { border-top:1px solid var(--border); padding:10px 0; }
+.viewer-mode-left summary { cursor:pointer; font-weight:600; }
+.viewer-mode-left p { white-space:pre-wrap; overflow-wrap:anywhere; }
+.library-reference { display:grid; gap:8px; justify-items:start; }
+/* 阅片助手 — ported interaction skeleton. Every reply is a scripted placeholder (see the
+   component header): no model is connected, so nothing here reads the slide. */
+.viewer-assistant { display:flex; flex-direction:column; gap:12px; padding:16px; background:var(--surface); border-left:1px solid var(--border); min-width:0; overflow-y:auto; }
+.viewer-assistant > header { display:flex; align-items:center; gap:10px; }
+.viewer-assistant > header > span { display:grid; place-items:center; width:30px; height:30px; border-radius:50%; color:#fff; background:var(--primary); font-size:12px; font-weight:800; }
+.viewer-assistant > header b { display:block; }
+.viewer-assistant > header small { display:block; color:var(--muted); font-size:var(--type-caption); }
+.viewer-assistant > header button { margin-inline-start:auto; }
+.viewer-assistant-mode { display:grid; gap:6px; font-size:var(--type-ui); }
+.viewer-assistant-mode select,.viewer-assistant-foot select { padding:8px; border:1px solid var(--border); border-radius:8px; background:white; }
+.viewer-assistant-note { margin:0; color:var(--muted); font-size:var(--type-caption); }
+.viewer-chat { flex:1; overflow-y:auto; display:grid; gap:10px; align-content:start; }
+.viewer-chat-message { padding:10px 12px; border-radius:10px; font-size:var(--type-ui); }
+.viewer-chat-message.assistant { background:var(--primary-soft); }
+.viewer-chat-message.user { background:var(--background); border:1px solid var(--border); }
+.viewer-chat-message p { margin:0; white-space:pre-wrap; }
+.viewer-chat-welcome { color:var(--muted); font-size:var(--type-ui); }
+.viewer-chat-welcome button { display:block; width:100%; margin-top:8px; padding:8px 10px; text-align:left; border:1px solid var(--border); border-radius:8px; background:white; cursor:pointer; }
+.viewer-report { margin:0; }
+.viewer-report dt { color:var(--muted); font-size:var(--type-caption); margin-top:8px; }
+.viewer-report dd { margin:2px 0 0; }
+.viewer-report-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.viewer-muted { color:var(--muted); }
+.viewer-assistant-input { display:grid; gap:8px; }
+.viewer-assistant-input textarea { min-height:64px; padding:8px; border:1px solid var(--border); border-radius:8px; resize:vertical; font:inherit; }
+.viewer-chat-quick { display:flex; gap:8px; }
+.viewer-assistant-foot { display:flex; align-items:center; gap:8px; }
+.viewer-assistant-foot .ui-button { min-height:34px; padding:5px 10px; }
+.viewer-assistant-fab { position:absolute; right:20px; bottom:20px; z-index:4; display:flex; align-items:center; gap:8px; padding:10px 16px; border:0; border-radius:999px; color:#fff; background:var(--primary); box-shadow:0 6px 20px rgba(0,0,0,.18); cursor:pointer; }
+.viewer-assistant-fab span { display:grid; place-items:center; width:24px; height:24px; border-radius:50%; background:rgba(255,255,255,.22); font-size:12px; font-weight:800; }
+.exam-mode-left { border-right:1px solid var(--border); }
+.exam-mode-right { border-left:1px solid var(--border); display:flex; flex-direction:column; gap:12px; }
+.exam-mode-left h2,.exam-mode-right h2 { margin:0; font-size:18px; }
+.exam-mode-left h3 { margin:0; font-size:var(--type-ui); color:var(--muted); }
+.exam-mode-prompt { margin:0; }
+.exam-mode-right > label { display:flex; gap:8px; align-items:flex-start; }
+.exam-mode-foot { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 24px; border-top:1px solid var(--border); background:var(--surface); }
+.exam-mode-foot nav { display:flex; gap:6px; flex-wrap:wrap; }
+.exam-mode-foot .ui-button { min-height:34px; padding:5px 10px; }
+/* The slide tools float over the canvas instead of taking a row, so the slide keeps the height. */
+.case-viewer-float { position:absolute; top:12px; left:12px; right:12px; z-index:3; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.case-viewer-float .case-viewer-tools,.case-viewer-float .case-viewer-meta { padding:6px 8px; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,.94); }
+.case-viewer-float .case-viewer-meta { margin-inline-start:auto; display:flex; align-items:center; gap:10px; }.library-toolbar label { display:grid; gap:6px; min-width:0; }.library-toolbar label:first-child { flex:1; }.library-toolbar input,.library-toolbar select { padding:10px; border:1px solid var(--border); border-radius:8px; min-width:0; background:white; color:var(--text); }.library-view-toggle { display:flex; gap:6px; }
 .library-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }.library-card { overflow:hidden; background:white; border:1px solid var(--border); border-radius:12px; min-width:0; }.library-cover { border:0; padding:0; width:100%; height:170px; position:relative; display:block; overflow:hidden; background:var(--primary-soft); }.library-cover img { width:100%; height:100%; object-fit:cover; }.library-cover > span { position:absolute; bottom:8px; left:8px; background:#fffffff0; padding:2px 8px; border-radius:4px; font-size:14px; color:var(--text); }
 .library-card-body { padding:18px; }.library-card h2 { font-size:18px; margin:10px 0; }.library-card p { font-size:14px; margin:6px 0; }.library-card small { font-size:14px; color:var(--muted); overflow-wrap:anywhere; }.library-card footer { display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; }.library-tags { display:flex; gap:6px; font-size:14px; }.library-tags span,.library-tag { display:inline-block; padding:3px 8px; background:var(--primary-soft); color:var(--primary-strong); border-radius:5px; font-size:14px; }.library-list { display:grid; gap:12px; }.library-list .library-card { display:grid; grid-template-columns:200px minmax(0,1fr); }.library-list .library-cover { height:100%; min-height:160px; }.library-list .library-card footer { margin-top:10px; }.library-pagination { justify-content:flex-end; }.library-pagination > span { margin-right:auto; }
 .library-detail { display:grid; grid-template-columns:minmax(230px,1fr) minmax(0,3fr); gap:20px; }.library-detail h2 { margin-top:0; font-size:20px; }.library-detail h3 { font-size:16px; margin-bottom:6px; }.library-detail p { white-space:pre-wrap; overflow-wrap:anywhere; }.library-detail dl { margin:0; }.library-detail dt { font-size:14px; color:var(--muted); }.library-detail dd { margin:0 0 12px; overflow-wrap:anywhere; }.library-reader { min-width:0; }.library-reader header,.library-reader footer { display:flex; align-items:center; gap:10px; }.library-reader header { justify-content:flex-start; flex-wrap:wrap; }

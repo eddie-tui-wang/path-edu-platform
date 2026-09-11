@@ -27,7 +27,9 @@ try{
  await p.getByRole('button',{name:'退出',exact:true}).click();
 
  // 1. practice, single choice
- await login('student');await nav('日常练习');
+ await login('student');
+ // 日常练习 已从学生导航移除（2026-09-11）；路由仍有效，深链进入。
+ await p.evaluate(()=>{location.hash='#role=student&page=practice';window.dispatchEvent(new PopStateEvent('popstate'));});await p.waitForTimeout(700);
  await p.getByRole('button',{name:'开始练习',exact:true}).first().click();
  await fail('path-edu-practice-draft-');await p.getByRole('radio').first().check();
  await p.getByRole('alert').filter({hasText:'答案尚未保存'}).waitFor();

@@ -9,7 +9,8 @@ try{
  await p.goto('http://localhost:3002/');
  await p.locator('[name=username]').fill('demo_student');await p.locator('[name=password]').fill('Demo2026!student');
  await p.getByRole('button',{name:'进入演示'}).click();await p.waitForTimeout(700);
- await p.locator('.edu-sidebar').getByRole('button',{name:'日常练习',exact:true}).click();await p.waitForTimeout(500);
+ // 日常练习 已从学生导航移除（2026-09-11）；路由仍有效，深链进入。
+ await p.evaluate(()=>{location.hash='#role=student&page=practice';window.dispatchEvent(new PopStateEvent('popstate'));});await p.waitForTimeout(700);
  await p.getByRole('button',{name:'开始练习',exact:true}).first().click();await p.waitForTimeout(700);
 
  // before submitting there is nothing to follow up on
