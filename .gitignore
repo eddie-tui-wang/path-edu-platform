@@ -8,3 +8,5 @@ out/
 coverage/
 *.log
 .local/
+# Screenshots from scripts/capture-ui-screenshots.mjs (a looking tool, not an artifact).
+.ui-shots/
