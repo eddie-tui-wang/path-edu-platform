@@ -18,7 +18,9 @@ test("preview navigation validates inputs and changes the same selected view", (
 test("migration is independent and clearly identifies demo boundaries", () => {
   const wrapper=readFileSync(new URL("../app/teaching-platform.tsx",import.meta.url),"utf8");
   assert.match(wrapper,/演示数据／功能待接入/);
-  assert.match(wrapper,/非真实登录/);
+  assert.match(wrapper,/账号服务 · 教学演示/);
+  assert.match(wrapper,/LibraryWorkspace/);
+  assert.doesNotMatch(wrapper,/<nav aria-label="账号授权导航"/);
   assert.match(wrapper,/不会采集麦克风/);
   const teacher=readFileSync(new URL("../app/teacher-ability-module.tsx",import.meta.url),"utf8");
   assert.doesNotMatch(teacher,/getUserMedia|MediaRecorder/);

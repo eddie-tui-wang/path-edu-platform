@@ -3,8 +3,8 @@ import "./migrated.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "病理教学平台 · 独立迁移版",
-  description: "独立病理教学项目：病例数据库、学生考试与教师教学分析。当前为迁移预览，非已上线教学MVP。",
+  title: "病理教学平台",
+  description: "独立病理教学项目：账号与权限管理，病例、学生考试与教师教学演示。",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -4,6 +4,7 @@
 
 import {
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
   useEffect,
   useMemo,
   useRef,
@@ -86,13 +87,14 @@ function isFilled(answer: Answer) {
   };
 }
 
-export function TeachingModule({ caseId, openMode, onExit }: { caseId: string; openMode: TeachingOpenMode; onExit: () => void }) {
+export function TeachingModule({ caseId, openMode, onExit, accountId = 'preview' }: { caseId: string; openMode: TeachingOpenMode; onExit: () => void; accountId?: string }) {
   const currentCase = teachingCases.find((item) => item.id === caseId) ?? teachingCases[0];
   const isContinuing = openMode === "case" && currentCase.status === "进行中";
-  const storageKey = `path-edu-demo-v1-${caseId}`;
+  const storageKey = `path-edu-demo-v1-${accountId}-${caseId}`;
   const [stage, setStage] = useState<TeachingStage>(openMode === "result" ? "result" : isContinuing ? "answer" : "intro");
   const [status, setStatus] = useState<TeachingStatus>(openMode === "result" ? "分析完成" : isContinuing ? "作答中" : "未开始");
   const [answer, setAnswer] = useState<Answer>(openMode === "result" ? demoAnswer : emptyAnswer);
+  const [mobilePanel,setMobilePanel]=useState("slide");
   const [tool, setTool] = useState("平移");
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -198,9 +200,10 @@ export function TeachingModule({ caseId, openMode, onExit }: { caseId: string; o
     setOffset({ x: drag.current.ox + event.clientX - drag.current.x, y: drag.current.oy + event.clientY - drag.current.y });
   }
 
+  if(caseId!=="gastric-001")return <section className="account-card"><button onClick={onExit}>返回来源页面</button><h1>{currentCase.title}</h1><p>固定流程样例 · 当前记录尚无专属作答、参考答案和图片证据，不能用胃病例的解析替代。</p></section>;
   if (stage === "intro") return <TeachingIntro currentCase={currentCase} onExit={onExit} onBegin={begin} />;
   if (stage === "analyzing") return <AnalysisProgress currentCase={currentCase} step={analysisStep} />;
-  if (stage === "result") return <TeachingResult currentCase={currentCase} answer={answer.marks.length ? answer : demoAnswer} onExit={onExit} />;
+  if (stage === "result") return <TeachingResult currentCase={currentCase} answer={answer} onExit={onExit} />;
 
   const sections = [
     ["clinical", "临床信息判断", completion.clinical], ["marks", "关键视野与形态", completion.marks],
@@ -209,14 +212,15 @@ export function TeachingModule({ caseId, openMode, onExit }: { caseId: string; o
   ] as const;
 
   return (
-    <div className="teaching-viewer">
+    <div className="teaching-viewer" data-panel={mobilePanel}>
       <header className="teaching-topbar">
         <div><b>考试作答</b><small>{currentCase.title} · 冻结病例版本 v3.2</small></div>
-        <nav>{["平移", "缩放", "矩形", "圆形", "点标注", "自由笔"].map((item) => <button type="button" className={tool === item ? "active" : ""} onClick={() => setTool(item)} key={item}><i>{item === "平移" ? "✥" : item === "缩放" ? "⌕" : item === "矩形" ? "□" : item === "圆形" ? "○" : item === "点标注" ? "•" : "⌁"}</i>{item}</button>)}</nav>
+        <nav>{["平移", "缩放", "矩形", "圆形", "点标注", "自由笔"].map((item) => <button type="button" className={tool === item ? "active" : ""} disabled={item==="自由笔"||item==="缩放"} title={item==="自由笔"?"自由笔尚未实现":item==="缩放"?"请使用画布下方加减按钮缩放":undefined} onClick={() => setTool(item)} key={item}><i>{item === "平移" ? "✥" : item === "缩放" ? "⌕" : item === "矩形" ? "□" : item === "圆形" ? "○" : item === "点标注" ? "•" : "⌁"}</i>{item}</button>)}</nav>
         <div className="teaching-top-actions"><span>仅本机演示保存 · {saveTime}</span><button type="button" onClick={onExit}>保存并退出</button></div>
       </header>
+      <nav className="viewer-panels" aria-label="阅片工作区切换">{[["clinical","临床资料"],["slide","切片图片"],["answer","答题"]].map(([id,label])=><button key={id} aria-pressed={mobilePanel===id} onClick={()=>setMobilePanel(id)}>{label}</button>)}</nav>
       <aside className="teaching-case-info"><h2>病例信息</h2><p>作答期间可随时查看</p>{caseInfo.map(([label, value]) => <details open={label === "性别 / 年龄" || label === "主诉"} key={label}><summary>{label}</summary><div>{value}</div></details>)}</aside>
-      <main className="teaching-slide"><div className={`teaching-stage tool-${tool}`} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={() => { drag.current.active = false; }} onClick={addMark}><div className="teaching-slide-transform" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})` }}><img src="/synthetic-pathology-slide.png" alt="教学病例合成病理切片" draggable={false} />{answer.marks.map((mark, index) => <button type="button" key={mark.id} className={`teaching-mark teaching-mark-${mark.type}${selectedMarkId === mark.id ? " active" : ""}`} style={{ left: `${mark.x}%`, top: `${mark.y}%` }} onClick={(event) => { event.stopPropagation(); locateMark(mark); }}><b>视野 {index + 1}</b></button>)}</div></div><div className="teaching-zoom"><button type="button" onClick={() => setZoom((value) => Math.max(.6, value - .2))}>−</button><span>{Math.round(zoom * 100)}%</span><button type="button" onClick={() => setZoom((value) => Math.min(4, value + .2))}>＋</button><button type="button" onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }}>复位</button></div><div className="teaching-navigator"><img src="/synthetic-pathology-slide.png" alt="切片导航图" /><i /></div></main>
+      <main className="teaching-slide"><div className={`teaching-stage tool-${tool}`} tabIndex={0} role="region" aria-label="切片画布，方向键平移，加减键缩放" onKeyDown={e=>{if(e.target!==e.currentTarget)return;if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)){e.preventDefault();setOffset(v=>({x:v.x+(e.key==="ArrowLeft"?-30:e.key==="ArrowRight"?30:0),y:v.y+(e.key==="ArrowUp"?-30:e.key==="ArrowDown"?30:0)}));}if(e.key==="+"||e.key==="=")setZoom(v=>Math.min(4,v+.2));if(e.key==="-")setZoom(v=>Math.max(.6,v-.2));}} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={() => { drag.current.active = false; }} onClick={addMark}><div className="teaching-slide-transform" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})` }}><img src="/synthetic-pathology-slide.png" alt="教学病例合成病理切片" draggable={false} />{answer.marks.map((mark, index) => <button type="button" key={mark.id} className={`teaching-mark teaching-mark-${mark.type}${selectedMarkId === mark.id ? " active" : ""}`} style={{ left: `${mark.x}%`, top: `${mark.y}%` }} onClick={(event) => { event.stopPropagation(); locateMark(mark); }}><b>视野 {index + 1}</b></button>)}</div></div><div className="teaching-zoom"><button type="button" onClick={() => setZoom((value) => Math.max(.6, value - .2))}>−</button><span>{Math.round(zoom * 100)}%</span><button type="button" onClick={() => setZoom((value) => Math.min(4, value + .2))}>＋</button><button type="button" onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }}>复位</button></div><div className="teaching-navigator"><img src="/synthetic-pathology-slide.png" alt="切片导航图" /><i /></div></main>
       <aside className="teaching-answer-panel">
         <header><div><b>考试作答 · 病例 1 / 2</b><small>{Object.values(completion).filter(Boolean).length} / 6 部分已完成 · 已自动保存</small></div><span>{String(Math.floor(secondsLeft / 60)).padStart(2, "0")}:{String(secondsLeft % 60).padStart(2, "0")}</span></header>
         <nav>{sections.map(([id, label, done], index) => <button type="button" className={activeSection === id ? "active" : ""} onClick={() => setActiveSection(id)} key={id}><span>{done ? "✓" : index + 1}</span>{label}</button>)}</nav>
@@ -230,10 +234,16 @@ export function TeachingModule({ caseId, openMode, onExit }: { caseId: string; o
         </div>
         <footer><span>{allComplete ? "全部必答内容已完成" : "提交前将检查必答内容"}</span><button type="button" onClick={() => { setShowCheck(true); if (allComplete) setShowConfirm(true); }}>提交答案</button></footer>
       </aside>
-      {showCheck && !allComplete ? <div className="teaching-modal"><section><h2>还不能提交</h2><p>请先完成以下必答内容：</p>{sections.filter(([, , done]) => !done).map(([id, label]) => <button type="button" key={id} onClick={() => { setActiveSection(id); setShowCheck(false); }}>○ {label}<span>去完成 →</span></button>)}<footer><button type="button" onClick={() => setShowCheck(false)}>继续作答</button></footer></section></div> : null}
-      {showConfirm ? <div className="teaching-modal"><section><h2>确认提交答案</h2><p>本次将提交 6 组选择答案，其中包含 {answer.marks.length} 个关键视野。提交后答案将锁定，不能继续修改。</p><div className="submit-summary"><span>必答题目<b>6 / 6</b></span><span>关键视野<b>{answer.marks.length}</b></span><span>自动保存<b>{saveTime}</b></span></div><footer><button type="button" onClick={() => setShowConfirm(false)}>返回检查</button><button className="primary" type="button" onClick={() => { setShowConfirm(false); setStatus("解析生成中"); setStage("analyzing"); }}>确认提交</button></footer></section></div> : null}
+      {showCheck && !allComplete ? <TeachingDialog title="还不能提交" onClose={()=>setShowCheck(false)}><section><h2>还不能提交</h2><p>请先完成以下必答内容：</p>{sections.filter(([, , done]) => !done).map(([id, label]) => <button type="button" key={id} onClick={() => { setActiveSection(id); setMobilePanel("answer");setShowCheck(false); }}>○ {label}<span>去完成 →</span></button>)}<footer><button type="button" onClick={() => setShowCheck(false)}>继续作答</button></footer></section></TeachingDialog> : null}
+      {showConfirm ? <TeachingDialog title="确认提交答案" onClose={()=>setShowConfirm(false)}><section><h2>确认提交答案</h2><p>本次将提交 6 组选择答案，其中包含 {answer.marks.length} 个关键视野。提交后答案将锁定，不能继续修改。</p><div className="submit-summary"><span>必答题目<b>6 / 6</b></span><span>关键视野<b>{answer.marks.length}</b></span><span>自动保存<b>{saveTime}</b></span></div><footer><button type="button" onClick={() => setShowConfirm(false)}>返回检查</button><button className="primary" type="button" onClick={() => { setShowConfirm(false); setStatus("解析生成中"); setStage("analyzing"); }}>确认提交</button></footer></section></TeachingDialog> : null}
     </div>
   );
+}
+
+function TeachingDialog({children,title,onClose,image=false}:{children:ReactNode;title:string;onClose:()=>void;image?:boolean}) {
+  const ref=useRef<HTMLDialogElement>(null);
+  useEffect(()=>{const dialog=ref.current;const trigger=document.activeElement as HTMLElement|null;dialog?.showModal();return()=>{dialog?.close();requestAnimationFrame(()=>{if(trigger?.isConnected)trigger.focus();});};},[]);
+  return <dialog ref={ref} aria-label={title} className={(image?"result-image-modal":"teaching-modal")+" native-dialog"} onCancel={onClose}>{children}</dialog>;
 }
 
 function TeachingIntro({ currentCase, onExit, onBegin }: { currentCase: (typeof teachingCases)[number]; onExit: () => void; onBegin: (demo?: boolean) => void }) {
@@ -242,7 +252,7 @@ function TeachingIntro({ currentCase, onExit, onBegin }: { currentCase: (typeof 
 
 function ChoiceQuestion({ title, hint, options, selected, multiple = false, onChange }: { title: string; hint: string; options: readonly string[]; selected: string[]; multiple?: boolean; onChange: (values: string[]) => void }) {
   function choose(option: string) { onChange(multiple ? selected.includes(option) ? selected.filter((item) => item !== option) : [...selected, option] : [option]); }
-  return <section className="teaching-choice-question"><header><div><h2>{title}</h2><p>请基于病例信息和当前切片完成判断。</p></div><span>{hint}</span></header><div>{options.map((option, index) => <button type="button" className={selected.includes(option) ? "selected" : ""} onClick={() => choose(option)} key={option}><i>{multiple ? selected.includes(option) ? "✓" : "□" : String.fromCharCode(65 + index)}</i><span>{option}</span></button>)}</div></section>;
+  return <section className="teaching-choice-question"><header><div><h2>{title}</h2><p>请基于病例信息和当前切片完成判断。</p></div><span>{hint}</span></header><div>{options.map((option, index) => <button type="button" aria-pressed={selected.includes(option)} className={selected.includes(option) ? "selected" : ""} onClick={() => choose(option)} key={option}><i>{multiple ? selected.includes(option) ? "✓" : "□" : String.fromCharCode(65 + index)}</i><span>{option}</span></button>)}</div></section>;
 }
 
 function ShortAnswer({ value, onChange }: { value: string; onChange: (value: string) => void }) {
@@ -274,7 +284,7 @@ function TeachingResult({ currentCase, answer, onExit }: { currentCase: (typeof 
     { title: "免疫组化方案", selected: answer.ihc.join("、"), correct: demoAnswer.ihc.join("、"), isCorrect: sameChoices(answer.ihc, demoAnswer.ihc), explanation: "MMR 用于评估错配修复状态；HER2 与 PD-L1 根据后续治疗决策追加，不替代形态诊断。" },
   ];
   const correctCount = results.filter((item) => item.isCorrect).length;
-  return <div className="teaching-result"><header><div><button type="button" onClick={onExit}>← 返回考试记录</button><b>{currentCase.title}</b></div><span>结果已发布</span></header><main><aside><h2>学习结果</h2>{[["answers", "逐题答案解析"], ["report", "标准诊断报告"]].map(([id, label]) => <button type="button" className={tab === id ? "active" : ""} onClick={() => setTab(id as typeof tab)} key={id}>{label}</button>)}<div><b>答题情况</b><strong>{correctCount} / 6 题一致</strong><small>以冻结评分版本为准</small></div></aside><section><article className="result-review-viewer"><div><img src="/synthetic-pathology-slide.png" alt="联动复习切片" /><span style={{ left: `${focusedMark.x}%`, top: `${focusedMark.y}%` }}><b>{focusedMark.name}</b></span></div><p><b>联动切片复习 · {Math.round(focusedMark.magnification / 20 * 100)}%</b><small>点击关键视野卡片，可回到对应切片区域复习。</small></p></article>{tab === "answers" ? <><article className="result-answer-summary"><div><span>本次完成</span><strong>6 题</strong></div><div><span>与标准答案一致</span><strong>{correctCount} 题</strong></div><p>重点复习“浸润前沿”与促纤维间质反应的对应关系。</p></article>{results.map((item, index) => <AnswerExplanation index={index + 1} {...item} key={item.title} />)}<article className="result-block"><h2>关键视野复习</h2><div className="result-view-grid">{demoAnswer.marks.map((mark) => <button type="button" key={mark.id} onClick={() => openMark(mark)}><span style={{ backgroundImage: "url('/synthetic-pathology-slide.png')", backgroundPosition: `${mark.x}% ${mark.y}%` }} /><b>{mark.name}</b><small>{mark.description}</small><em>定位并放大 →</em></button>)}</div></article><article className="result-learning-tip"><b>AI 学习建议</b><span>下次阅片先定位浸润前沿，再用高倍确认腺体与间质反应，可让诊断证据链更稳定。</span></article></> : <DiagnosticReport />}</section></main>{previewMark ? <div className="result-image-modal" role="dialog" aria-modal="true" aria-label={`${previewMark.name}大图预览`} onClick={() => setPreviewMark(null)}><section onClick={(event) => event.stopPropagation()}><header><div><b>{previewMark.name}</b><small>{Math.round(previewMark.magnification / 20 * 100)}% · 关键视野</small></div><button type="button" onClick={() => setPreviewMark(null)} aria-label="关闭大图">×</button></header><div><img src="/synthetic-pathology-slide.png" alt={`${previewMark.name}放大切片`} /><span style={{ left: `${previewMark.x}%`, top: `${previewMark.y}%` }}><b>{previewMark.name}</b></span></div><footer>{previewMark.description}</footer></section></div> : null}</div>;
+  return <div className="teaching-result"><header><div><button type="button" onClick={onExit}>← 返回考试记录</button><b>{currentCase.title}</b></div><span>结果已发布</span></header><main><aside><h2>学习结果</h2>{[["answers", "逐题答案解析"], ["report", "标准诊断报告"]].map(([id, label]) => <button type="button" className={tab === id ? "active" : ""} onClick={() => setTab(id as typeof tab)} key={id}>{label}</button>)}<div><b>答题情况</b><strong>{correctCount} / 6 题一致</strong><small>以冻结评分版本为准</small></div></aside><section><article className="result-review-viewer"><div><img src="/synthetic-pathology-slide.png" alt="联动复习切片" /><span style={{ left: `${focusedMark.x}%`, top: `${focusedMark.y}%` }}><b>{focusedMark.name}</b></span></div><p><b>联动切片复习 · {Math.round(focusedMark.magnification / 20 * 100)}%</b><small>点击关键视野卡片，可回到对应切片区域复习。</small></p></article>{tab === "answers" ? <><article className="result-answer-summary"><div><span>本次完成</span><strong>6 题</strong></div><div><span>与标准答案一致</span><strong>{correctCount} 题</strong></div><p>重点复习“浸润前沿”与促纤维间质反应的对应关系。</p></article>{results.map((item, index) => <AnswerExplanation index={index + 1} {...item} key={item.title} />)}<article className="result-block"><h2>关键视野复习</h2><div className="result-view-grid">{demoAnswer.marks.map((mark) => <button type="button" key={mark.id} onClick={() => openMark(mark)}><span style={{ backgroundImage: "url('/synthetic-pathology-slide.png')", backgroundPosition: `${mark.x}% ${mark.y}%` }} /><b>{mark.name}</b><small>{mark.description}</small><em>定位并放大 →</em></button>)}</div></article><article className="result-learning-tip"><b>AI 学习建议</b><span>下次阅片先定位浸润前沿，再用高倍确认腺体与间质反应，可让诊断证据链更稳定。</span></article></> : <DiagnosticReport />}</section></main>{previewMark ? <TeachingDialog image title={`${previewMark.name}大图预览`} onClose={()=>setPreviewMark(null)}><section onClick={(event) => event.stopPropagation()}><header><div><b>{previewMark.name}</b><small>{Math.round(previewMark.magnification / 20 * 100)}% · 关键视野</small></div><button type="button" onClick={() => setPreviewMark(null)} aria-label="关闭大图">×</button></header><div><img src="/synthetic-pathology-slide.png" alt={`${previewMark.name}放大切片`} /><span style={{ left: `${previewMark.x}%`, top: `${previewMark.y}%` }}><b>{previewMark.name}</b></span></div><footer>{previewMark.description}</footer></section></TeachingDialog> : null}</div>;
 }
 
 function AnswerExplanation({ index, title, selected, correct, isCorrect, explanation }: { index: number; title: string; selected: string; correct: string; isCorrect: boolean; explanation: string }) {

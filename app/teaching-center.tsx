@@ -29,13 +29,15 @@ const dimensions = [
 ] as const;
 
 export function StudentTeachingCenter({
+  initialSection="database", embedded=false,
   onOpenExam,
   onOpenViewer,
 }: {
+  initialSection?:string; embedded?:boolean;
   onOpenExam: (caseId: string, mode: TeachingOpenMode) => void;
   onOpenViewer: (caseId: string) => void;
 }) {
-  const [section, setSection] = useState<TeachingSection>("database");
+  const [section, setSection] = useState<TeachingSection>(initialSection as TeachingSection);
   const [source, setSource] = useState<CaseSource>("全部来源");
   const [examFilter, setExamFilter] = useState<ExamFilter>("全部");
   const [query, setQuery] = useState("");
@@ -51,11 +53,11 @@ export function StudentTeachingCenter({
     ["ability", "能力分析", "◎"],
   ];
 
-  return <section className="teaching-center-shell panel">
-    <aside className="teaching-center-nav">
+  return <section className={embedded?"teaching-center-shell panel embedded":"teaching-center-shell panel"}>
+    {!embedded&&<aside className="teaching-center-nav">
       <nav>{navigation.map(([id, label, icon, count]) => <button type="button" className={section === id ? "active" : ""} onClick={() => setSection(id)} key={id}><i>{icon}</i><span>{label}</span>{count ? <em>{count}</em> : null}</button>)}</nav>
-    </aside>
-    <main className="teaching-center-content">
+    </aside>}
+    <main className="teaching-center-content"><span className="library-tag">示例数据</span>
       {section === "database" ? <CaseDatabase source={source} setSource={setSource} query={query} setQuery={setQuery} cases={visibleCases} onOpenViewer={onOpenViewer} onImport={() => setImportMode("choose")} /> : null}
       {section === "exams" ? <ExamCenter filter={examFilter} setFilter={setExamFilter} exams={visibleExams} onOpen={onOpenExam} /> : null}
       {section === "records" ? <ExamRecords onOpen={onOpenExam} /> : null}
@@ -67,11 +69,13 @@ export function StudentTeachingCenter({
 }
 
 function CaseDatabase({ source, setSource, query, setQuery, cases, onOpenViewer, onImport }: { source: CaseSource; setSource: (value: CaseSource) => void; query: string; setQuery: (value: string) => void; cases: readonly (typeof caseCatalog)[number][]; onOpenViewer: (caseId: string) => void; onImport: () => void }) {
+  const [organ,setOrgan]=useState("全部部位"),[difficulty,setDifficulty]=useState("全部难度");
+  const filtered=cases.filter(c=>(organ==="全部部位"||c.organ===organ)&&(difficulty==="全部难度"||c.difficulty===difficulty));
   return <div className="teaching-database">
-    <header><div><h2>病例数据库</h2><p>浏览和管理已授权教学病例。</p></div><button type="button" disabled title="真实图片上传将在后台接入后开放">图片上传待接入</button></header>
-    <div className="teaching-filter"><label>⌕<input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索病例编号、部位或病种" /></label><select aria-label="病例来源" value={source} onChange={(event) => setSource(event.target.value as CaseSource)}><option>全部来源</option><option>标准数据库</option><option>院方数据库</option></select><select aria-label="病例部位"><option>全部部位</option><option>胃</option><option>乳腺</option><option>结直肠</option></select><select aria-label="病例难度"><option>全部难度</option><option>基础</option><option>进阶</option><option>挑战</option></select></div>
-    <div className="teaching-case-catalog">{cases.map((item, index) => <article key={item.id}><button type="button" className="catalog-image" onClick={() => onOpenViewer(item.id)}><span style={{ backgroundImage: "url('/synthetic-pathology-slide.png')", backgroundPosition: `${28 + index * 24}% center` }} /></button><div className="catalog-body"><div><span>{item.organ}</span><span>{item.difficulty}</span><span>{item.version}</span></div><h3>{item.title}</h3><p>{item.code} · {item.disease}</p><small>{item.space}</small><button type="button" onClick={() => onOpenViewer(item.id)}>查看病例 →</button></div></article>)}</div>
-    {!cases.length ? <div className="teaching-empty"><b>未找到符合条件的病例</b><span>请调整关键词或筛选条件。</span></div> : null}
+    <header><div><h2>病例数据库</h2><p>浏览开放的教学示例病例。</p></div></header>
+    <div className="teaching-filter"><label>⌕<input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索病例编号、部位或病种" /></label><select aria-label="病例来源" value={source} onChange={(event) => setSource(event.target.value as CaseSource)}><option>全部来源</option><option>标准数据库</option><option>院方数据库</option></select><select aria-label="病例部位" value={organ} onChange={e=>setOrgan(e.target.value)}><option>全部部位</option><option>胃</option><option>乳腺</option><option>结直肠</option></select><select aria-label="病例难度" value={difficulty} onChange={e=>setDifficulty(e.target.value)}><option>全部难度</option><option>基础</option><option>进阶</option><option>挑战</option></select></div>
+    <div className="teaching-case-catalog">{filtered.map((item, index) => <article key={item.id}><button type="button" className="catalog-image" onClick={() => onOpenViewer(item.id)}><span style={{ backgroundImage: "url('/synthetic-pathology-slide.png')", backgroundPosition: `${28 + index * 24}% center` }} /></button><div className="catalog-body"><div><span>{item.organ}</span><span>{item.difficulty}</span><span>{item.version}</span></div><h3>{item.title}</h3><p>{item.code} · {item.disease}</p><small>{item.space}</small><button type="button" onClick={() => onOpenViewer(item.id)}>查看病例 →</button></div></article>)}</div>
+    {!filtered.length ? <div className="teaching-empty"><b>未找到符合条件的病例</b><span>请调整关键词或筛选条件。</span></div> : null}
   </div>;
 }
 
@@ -123,14 +127,16 @@ function ExamCenter({ filter, setFilter, exams, onOpen }: { filter: ExamFilter; 
 }
 
 function ExamRecords({ onOpen }: { onOpen: (caseId: string, mode: TeachingOpenMode) => void }) {
-  return <div className="learning-page"><header><div><h2>考试记录</h2><p>按考试时冻结的版本还原历史记录。</p></div><select aria-label="考试记录状态"><option>全部状态</option><option>结果已发布</option><option>等待发布</option></select></header><div className="learning-table"><div className="head"><span>考试名称</span><span>试卷类型</span><span>提交时间</span><span>结果状态</span><span>成绩</span><span>操作</span></div>{[["结直肠肿瘤鉴别诊断考试", "简答题试卷", "2026-08-19 16:42", "结果已发布", "82", "colon-003"], ["乳腺病理基础考试", "选择题试卷", "2026-08-04 10:18", "结果已发布", "91", "breast-002"], ["胃黏膜病变阶段测验", "混合试卷", "2026-07-26 14:31", "等待发布", "—", "gastric-001"]].map(([title, type, time, state, score, id]) => <div key={title}><span><b>{title}</b><small>冻结版本 · {id === "colon-003" ? "v4.0" : "v2.1"}</small></span><span>{type}</span><span>{time}</span><span><i className={state === "结果已发布" ? "published" : "waiting"} />{state}</span><strong>{score}</strong><button type="button" disabled={state !== "结果已发布"} onClick={() => onOpen(id, "result")}>{state === "结果已发布" ? "查看结果" : "等待发布"}</button></div>)}</div></div>;
+  const [filter,setFilter]=useState("全部状态");
+  return <div className="learning-page"><header><div><h2>考试记录</h2><p>按考试时冻结的版本还原历史记录。</p></div><select aria-label="考试记录状态" value={filter} onChange={e=>setFilter(e.target.value)}><option>全部状态</option><option>结果已发布</option><option>等待发布</option></select></header><div className="learning-table"><div className="head"><span>考试名称</span><span>试卷类型</span><span>提交时间</span><span>结果状态</span><span>成绩</span><span>操作</span></div>{[["结直肠肿瘤鉴别诊断考试", "简答题试卷", "2026-08-19 16:42", "结果已发布", "82", "colon-003"], ["乳腺病理基础考试", "选择题试卷", "2026-08-04 10:18", "结果已发布", "91", "breast-002"], ["胃黏膜病变阶段测验", "混合试卷", "2026-07-26 14:31", "等待发布", "—", "gastric-001"]].filter(row=>filter==="全部状态"||row[3]===filter).map(([title, type, time, state, score, id]) => <div key={title}><span><b>{title}</b><small>冻结版本 · {id === "colon-003" ? "v4.0" : "v2.1"}</small></span><span>{type}</span><span>{time}</span><span><i className={state === "结果已发布" ? "published" : "waiting"} />{state}</span><strong>{score}</strong><button type="button" disabled={state !== "结果已发布"} onClick={() => onOpen(id, "result")}>{state === "结果已发布" ? "查看结果" : "等待发布"}</button></div>)}</div></div>;
 }
 
 function WrongQuestions({ onOpen }: { onOpen: (caseId: string, mode: TeachingOpenMode) => void }) {
+  const [filter,setFilter]=useState("");
   const items = [["关键区域识别", "未完整标记可疑浸润前沿", "结直肠肿瘤鉴别诊断考试", "colon-003"], ["诊断与鉴别", "高级别上皮内瘤变与浸润性腺癌", "结直肠肿瘤鉴别诊断考试", "colon-003"], ["辅助检查规划", "HER2 与 MMR 的使用目的", "乳腺病理基础考试", "breast-002"], ["临床信息整合", "临床信息与镜下证据权重", "乳腺病理基础考试", "breast-002"]] as const;
-  return <div className="learning-page"><header><div><h2>错题集</h2><p>回看答案、解析与切片证据，不提供重新作答。</p></div><b>4 道 · 2 场考试</b></header><div className="wrong-filter"><button className="active">全部类型</button>{["临床信息", "关键区域", "形态学", "诊断与鉴别", "辅助检查"].map((item) => <button key={item}>{item}</button>)}</div><div className="wrong-list">{items.map(([type, title, exam, id], index) => <article key={title}><i>{index + 1}</i><div><span>{type}</span><h3>{title}</h3><p>{exam} · 题目版本已冻结</p></div><strong>{index % 2 ? "多选题" : "关键视野题"}</strong><button type="button" onClick={() => onOpen(id, "result")}>查看解析与证据 →</button></article>)}</div></div>;
+  return <div className="learning-page"><header><div><h2>错题集</h2><p>回看答案、解析与切片证据，不提供重新作答。</p></div><b>4 道 · 2 场考试</b></header><div className="wrong-filter"><button className={!filter?"active":""} onClick={()=>setFilter("")}>全部类型</button>{["临床信息", "关键区域", "形态学", "诊断与鉴别", "辅助检查"].map((item) => <button key={item} className={filter===item?"active":""} onClick={()=>setFilter(item)}>{item}</button>)}</div><div className="wrong-list">{!items.some(item=>!filter||item[0].includes(filter))&&<p role="status">没有此类型的错题，请调整筛选。</p>}{items.filter(item=>!filter||item[0].includes(filter)).map(([type, title, exam, id], index) => <article key={title}><i>{index + 1}</i><div><span>{type}</span><h3>{title}</h3><p>{exam} · 题目版本已冻结</p></div><strong>{index % 2 ? "多选题" : "关键视野题"}</strong><button type="button" onClick={() => onOpen(id, "result")}>查看解析与证据 →</button></article>)}</div></div>;
 }
 
 function AbilityProfile({ onOpen }: { onOpen: (caseId: string, mode: TeachingOpenMode) => void }) {
-  return <div className="ability-profile"><header><div><h2>五维能力分析</h2><p>仅基于已发布考试和可追溯证据。</p></div><b>更新于 08-20</b></header><section className="ability-overview"><article><div className="ability-ring"><strong>78</strong><small>综合表现</small></div><div><h3>证据覆盖较完整</h3><p>基于最近 3 场已发布考试、26 道有效题目与 5 个关键视野。</p><span>分析版本 AP-0.3.1</span></div></article><article><b>本期建议</b><h3>优先加强诊断与鉴别的证据组织</h3><p>先指出支持诊断的形态证据，再对候选诊断逐项排除，避免只选择结论。</p><button type="button" onClick={() => onOpen("colon-003", "result")}>查看对应证据 →</button></article></section><div className="ability-dimensions">{dimensions.map(([name, score, state], index) => <button type="button" onClick={() => onOpen(index === 1 || index === 3 ? "colon-003" : "breast-002", "result")} key={name}><header><span>{name}</span><em>{state}</em></header><strong>{score}<small>/100</small></strong><i><b style={{ width: `${score}%` }} /></i><footer>{score < 76 ? "查看薄弱题目与切片证据" : "查看得分证据"}<span>→</span></footer></button>)}</div><section className="ability-evidence"><header><div><h3>能力变化证据</h3><p>每条结论均可回到考试、题目与关键视野。</p></div><select aria-label="能力分析时间范围"><option>最近 90 天</option><option>最近 30 天</option></select></header>{[["诊断与鉴别", "+6", "2 场考试 · 7 道题", "能够识别主要候选诊断，但排除依据仍不完整。"], ["关键区域识别", "+2", "3 场考试 · 5 个视野", "低倍定位稳定，高倍浸润前沿存在漏标。"], ["形态学判断", "+9", "3 场考试 · 6 道题", "腺体结构与细胞异型性判断持续稳定。"]].map(([name, change, source, text]) => <article key={name}><span>{name}<b>{change}</b></span><div><b>{source}</b><p>{text}</p></div><button type="button" onClick={() => onOpen("colon-003", "result")}>查看证据 →</button></article>)}</section></div>;
+  return <div className="ability-profile"><header><div><h2>五维能力分析</h2><p>仅基于已发布考试和可追溯证据。</p></div><b>更新于 08-20</b></header><section className="ability-overview"><article><div className="ability-ring"><strong>78</strong><small>综合表现</small></div><div><h3>证据覆盖较完整</h3><p>基于最近 3 场已发布考试、26 道有效题目与 5 个关键视野。</p><span>分析版本 AP-0.3.1</span></div></article><article><b>本期建议</b><h3>优先加强诊断与鉴别的证据组织</h3><p>先指出支持诊断的形态证据，再对候选诊断逐项排除，避免只选择结论。</p><button type="button" onClick={() => onOpen("colon-003", "result")}>查看对应证据 →</button></article></section><div className="ability-dimensions">{dimensions.map(([name, score, state], index) => <button type="button" onClick={() => onOpen(index === 1 || index === 3 ? "colon-003" : "breast-002", "result")} key={name}><header><span>{name}</span><em>{state}</em></header><strong>{score}<small>/100</small></strong><i><b style={{ width: `${score}%` }} /></i><footer>{score < 76 ? "查看薄弱题目与切片证据" : "查看得分证据"}<span>→</span></footer></button>)}</div><section className="ability-evidence"><header><div><h3>能力变化证据</h3><p>每条结论均可回到考试、题目与关键视野。</p></div><select aria-label="能力分析时间范围" disabled title="固定样例未提供时间序列筛选"><option>最近 90 天</option><option>最近 30 天</option></select></header>{[["诊断与鉴别", "+6", "2 场考试 · 7 道题", "能够识别主要候选诊断，但排除依据仍不完整。"], ["关键区域识别", "+2", "3 场考试 · 5 个视野", "低倍定位稳定，高倍浸润前沿存在漏标。"], ["形态学判断", "+9", "3 场考试 · 6 道题", "腺体结构与细胞异型性判断持续稳定。"]].map(([name, change, source, text]) => <article key={name}><span>{name}<b>{change}</b></span><div><b>{source}</b><p>{text}</p></div><button type="button" onClick={() => onOpen("colon-003", "result")}>查看证据 →</button></article>)}</section></div>;
 }
