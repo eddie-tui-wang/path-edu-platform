@@ -3,64 +3,131 @@ import {mkdtemp,cp,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
+
+// Detail-flow acceptance: library / ability / teaching-record / practice drill-downs,
+// hash-route restore after reload, image-viewer controls, back navigation, narrow layout.
+// Rewritten 2026-09-11 against the current UI (the previous version targeted the
+// pre-2026-09-09 information architecture and could only time out).
+
 const zoom=process.env.NATIVE_ZOOM==='200';
-const profile=await mkdtemp(path.join(tmpdir(),'path-edu-layout-'));
+const profile=await mkdtemp(path.join(tmpdir(),'path-edu-detail-'));
 if(zoom)await cp(new URL('./fixtures/chrome-200/',import.meta.url),profile,{recursive:true});
 const context=await chromium.launchPersistentContext(profile,{channel:'chrome',headless:true,viewport:null,args:['--window-size=1440,1000']});
 const p=context.pages()[0];p.setDefaultTimeout(12000);
-const cdp=await context.newCDPSession(p);
 const errors=[];p.on('pageerror',e=>errors.push(e.message));
-async function login(role){await p.locator('[name=username]').fill('demo_'+role);await p.locator('[name=password]').fill('Demo2026!'+role);await p.getByRole('button',{name:'进入演示'}).click();}
-async function fit(label){assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),label+' horizontal overflow');if(['trajectory','viewer','question editor'].includes(label)){const file=path.join(profile,label.replaceAll(' ','-')+'.png');if(zoom){const shot=await cdp.send('Page.captureScreenshot',{format:'png',fromSurface:false});await writeFile(file,Buffer.from(shot.data,'base64'));}else await p.screenshot({path:file,fullPage:true});console.log('Screenshot:',file);}}
-async function nav(name){await p.locator('.edu-sidebar').getByRole('button',{name,exact:true}).click();}
+
+const fit=async(label)=>assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),label+': page-level horizontal overflow');
+const nav=async name=>{await p.locator('.edu-sidebar').getByRole('button',{name,exact:true}).click();await p.waitForTimeout(400);};
+const login=async role=>{await p.locator('[name=username]').fill('demo_'+role);await p.locator('[name=password]').fill('Demo2026!'+role);await p.getByRole('button',{name:'进入演示'}).click();await p.waitForTimeout(700);};
+const hash=()=>p.evaluate(()=>location.hash);
+const shot=async label=>{const file=path.join(profile,'detail-'+label.replaceAll(' ','-')+'.png');await p.screenshot({path:file,fullPage:true});return file;};
+
 try{
- await p.goto('http://localhost:3002');
+ await p.goto('http://localhost:3002/');
  const metrics=await p.evaluate(()=>({inner:innerWidth,outer:outerWidth,dpr:devicePixelRatio}));
- console.log('Native browser metrics:',metrics);
- if(zoom){assert.ok(metrics.dpr>=2&&metrics.outer/metrics.inner>1.9,'native browser zoom must change layout viewport and DPR');}
+ console.log('Native browser metrics:',JSON.stringify(metrics));
+ if(zoom)assert.ok(metrics.dpr>=2&&metrics.outer/metrics.inner>1.9,'native browser zoom must change layout viewport and DPR');
+
  await login('teacher');
- for(const name of ['考试管理','病例资料','教学记录','能力分析']){await nav(name);await fit('teacher '+name);}
- await p.getByRole('button',{name:/专业知识.*优势/}).click();await fit('dimension evidence');
- await p.getByRole('button',{name:'查看此记录的对应证据'}).click();
- await p.getByRole('heading',{name:'差异与原始证据'}).waitFor();await fit('diagnosis');
- await p.goBack();await p.getByRole('heading',{name:'专业知识 · 证据集合'}).waitFor();
- await p.goForward();await p.getByRole('heading',{name:'差异与原始证据'}).waitFor();
- await p.getByRole('button',{name:'← 返回维度证据',exact:true}).click();await p.getByRole('heading',{name:'专业知识 · 证据集合'}).waitFor();
- await p.getByRole('button',{name:'查看此记录的对应证据'}).click();
- await p.getByRole('button',{name:'讲解轨迹',exact:true}).click();await fit('trajectory');
- await p.getByRole('button',{name:/00:12:42/}).click();
- await p.reload();await login('teacher');await p.getByText('00:12:42 · 定位腺体融合区域',{exact:true}).waitFor();
- await p.getByRole('button',{name:'互动问答',exact:true}).click();await fit('qa');
- await nav('教学记录');await p.getByRole('button',{name:'查看分析'}).nth(1).click();await fit('missing evidence');
- await p.getByRole('button',{name:'返回上级页面',exact:true}).click();
- await p.getByRole('button',{name:'＋ 开展教学阅片'}).click();await fit('choose teaching case');await p.getByRole('button',{name:'使用此病例开始阅片'}).first().click();await fit('capture');
- await p.getByRole('button',{name:'开始演示',exact:true}).click();await fit('capture recording');
- await nav('病例资料');await p.getByRole('button',{name:'新建病例',exact:true}).click();await fit('case editor');
- await p.locator('[name=title]').fill('navigation draft');p.once('dialog',d=>d.accept());await p.goBack();
- await p.getByRole('heading',{name:'我的病例'}).waitFor();await p.goForward();
- await p.waitForFunction(()=>document.querySelector('[name=title]')?.value==='navigation draft');
- p.once('dialog',d=>d.accept());await nav('考试管理');
- await p.getByRole('button',{name:'新建试卷',exact:true}).click();await fit('exam editor');
- await p.getByRole('button',{name:'添加题目',exact:true}).click();await fit('question editor');
- p.once('dialog',d=>d.accept());await p.getByRole('button',{name:'退出',exact:true}).click();
+
+ // --- every teacher module renders without page-level horizontal overflow
+ for(const name of ['切片图书馆','题库与出题','考试管理','教学记录','能力分析']){await nav(name);await fit('teacher '+name);}
+
+ // --- library detail: open, use the image viewer, go back, then restore by deep link
+ await nav('切片图书馆');
+ await p.getByRole('button',{name:'查看病例'}).first().click();await p.waitForTimeout(600);
+ await p.getByRole('heading',{name:'临床资料',exact:true}).waitFor();
+ assert.match(await hash(),/libraryCase=library-demo-01/,'library detail must be addressable');
+ assert.equal(await p.getByRole('button',{name:'返回图书馆',exact:true}).count(),1,'detail keeps a back action');
+ assert.equal(await p.getByRole('button',{name:'编辑病例与参考',exact:true}).count(),1,'teacher sees the edit action');
+ await fit('teacher library detail');
+ await p.getByRole('button',{name:'放大图片',exact:true}).click();
+ assert.ok(await p.getByText('125%',{exact:true}).count()>0,'the viewer zoom control must change the displayed scale');
+ await p.getByRole('button',{name:'复位视野',exact:true}).click();
+ assert.ok(await p.getByText('100%',{exact:true}).count()>0,'reset must restore the default scale');
+ await p.getByRole('button',{name:'返回图书馆',exact:true}).click();await p.waitForTimeout(600);
+ await p.getByRole('heading',{name:'切片图书馆',exact:true}).waitFor();
+ assert.ok(!(await hash()).includes('libraryCase='),'going back must leave the detail route');
+ console.log('Screenshot:',await shot(zoom?'teacher library detail 200':'teacher library detail'));
+
+ await p.goto('http://localhost:3002/#role=teacher&page=cases&libraryCase=library-demo-01');
+ await p.reload();await login('teacher');
+ await p.getByRole('heading',{name:'临床资料',exact:true}).waitFor();
+ assert.match(await hash(),/libraryCase=library-demo-01/,'reload must restore the library detail route');
+ console.log('library detail restored after reload');
+
+ // --- ability detail: evidence set -> record evidence -> back
+ await nav('能力分析');
+ await p.getByRole('button',{name:'查看对应证据 →'}).first().click();await p.waitForTimeout(600);
+ await p.getByRole('heading',{name:/证据集合$/}).waitFor();
+ await fit('teacher ability evidence');
+ await p.getByRole('button',{name:'查看此记录的对应证据',exact:true}).first().click();await p.waitForTimeout(600);
+ await p.getByRole('heading',{name:'差异与原始证据',exact:true}).waitFor();
+ await fit('teacher ability record detail');
+ await p.getByRole('button',{name:'← 返回维度证据',exact:true}).click();await p.waitForTimeout(600);
+ await p.getByRole('heading',{name:/证据集合$/}).waitFor();
+ await p.getByRole('button',{name:'返回能力总览',exact:true}).click();await p.waitForTimeout(600);
+ await p.getByRole('heading',{name:'能力总览',exact:true}).waitFor();
+ console.log('ability drill-down ok');
+
+ // --- teaching record detail: tabs, history back/forward, restore after reload
+ await nav('教学记录');
+ await p.getByRole('button',{name:'查看分析'}).first().click();await p.waitForTimeout(600);
+ await p.getByRole('heading',{name:'讲解时间轴',exact:true}).waitFor();
+ await fit('teacher record detail');
+ for(const tab of ['互动问答','诊断一致性','讲解轨迹']){await p.getByRole('button',{name:tab,exact:true}).click();await p.waitForTimeout(250);await fit('teacher record '+tab);}
+ assert.match(await hash(),/page=records/,'record detail must stay on the records route');
+ const detailHash=await hash();
+ await p.goBack();await p.waitForTimeout(600);
+ assert.notEqual(await hash(),detailHash,'browser back must leave the detail');
+ await p.goForward();await p.waitForTimeout(600);
+ assert.equal(await hash(),detailHash,'browser forward must return to the detail');
+ await p.reload();await login('teacher');
+ await p.getByRole('heading',{name:'讲解时间轴',exact:true}).waitFor();
+ console.log('teaching-record detail: tabs, back/forward, reload restore ok');
+
+ // --- question editor is a distinct view reachable from the bank, and returns
+ await nav('题库与出题');
+ await p.getByRole('button',{name:'编辑新版本'}).first().click();await p.waitForTimeout(600);
+ await p.getByRole('heading',{name:'编辑题目',exact:true}).waitFor();
+ await fit('teacher question editor');
+ assert.equal(await p.getByRole('button',{name:'结束编辑',exact:true}).count(),0,'the removed "结束编辑" action must not come back');
+ await p.getByRole('button',{name:'返回题库',exact:true}).click();await p.waitForTimeout(600);
+ await p.getByRole('heading',{name:'题库与出题',exact:true}).waitFor();
+ console.log('question editor round-trip ok');
+
+ await p.getByRole('button',{name:'退出',exact:true}).click();await p.waitForTimeout(700);
+
+ // --- student: every module, library detail, practice detail with panel switching
  await login('student');
- for(const name of ['考试中心','病例数据库','考试记录','错题集','能力分析']){await nav(name);await fit('student '+name);}
- await p.goto('http://localhost:3002/#role=student&page=records&exam=gastric-001&mode=case');await p.reload();await login('student');
- await p.locator('.teaching-viewer').waitFor();await fit('viewer');
- if(await p.locator('.viewer-panels').isVisible()){
-  await p.getByRole('button',{name:'临床资料',exact:true}).click();await fit('clinical panel');
-  await p.getByRole('button',{name:'切片图片',exact:true}).click();
+ for(const name of ['日常练习','考试中心','切片图书馆','学习记录','错题集','能力分析']){await nav(name);await fit('student '+name);}
+
+ await nav('切片图书馆');
+ await p.getByRole('button',{name:'查看病例'}).first().click();await p.waitForTimeout(600);
+ await p.getByRole('heading',{name:'临床资料',exact:true}).waitFor();
+ assert.equal(await p.getByRole('button',{name:'编辑病例与参考',exact:true}).count(),0,'students must not see the teacher edit action');
+ await fit('student library detail');
+ await p.getByRole('button',{name:'返回图书馆',exact:true}).click();await p.waitForTimeout(600);
+ await p.getByRole('heading',{name:'切片图书馆',exact:true}).waitFor();
+
+ await nav('日常练习');
+ await p.getByRole('button',{name:/开始练习|查看本次作答/}).first().click();await p.waitForTimeout(700);
+ await p.getByRole('heading',{name:/日常练习 · 作答/}).waitFor();
+ await fit('student practice detail');
+ // Wide layout shows the three panels side by side; below 1100px they collapse into tabs.
+ if(await p.locator('.practice-tabs').isVisible()){
+  for(const tab of ['图片','临床资料','作答与解析']){
+   await p.getByRole('button',{name:tab,exact:true}).click();await p.waitForTimeout(250);await fit('student practice '+tab);
+   assert.ok(await p.getByRole('button',{name:tab,exact:true}).getAttribute('aria-pressed')==='true',tab+' tab must become the selected panel');
+  }
+ }else{
+  assert.equal(await p.locator('.practice-columns > *').count(),3,'wide layout keeps history/image/answer side by side');
+  assert.equal(await p.getByRole('button',{name:'提交本题',exact:true}).count(),1,'the answer action stays reachable in the wide layout');
  }
- await p.getByRole('region',{name:/切片画布/}).focus();await p.keyboard.press('ArrowRight');
- assert.match(await p.locator('.teaching-slide-transform').getAttribute('style'),/30px/);
- if(await p.locator('.viewer-panels').isVisible())await p.getByRole('button',{name:'答题',exact:true}).click();
- await p.getByRole('button',{name:'提交答案',exact:true}).click();
- await p.getByRole('dialog',{name:'还不能提交'}).waitFor();await fit('submission dialog');
- for(let i=0;i<12;i++){await p.keyboard.press('Tab');assert.ok(await p.evaluate(()=>document.activeElement===document.body||Boolean(document.activeElement?.closest('dialog'))),'dialog focus entered background page');}
- await p.keyboard.press('Escape');assert.equal(await p.locator('dialog[open]').count(),0);
- await p.waitForFunction(()=>document.activeElement?.textContent==='提交答案');
- await p.goto('http://localhost:3002/#role=student&page=records&exam=gastric-001&mode=result');await p.reload();await login('student');
- await p.getByRole('button',{name:/异型腺体区域.*定位并放大/}).click();await fit('image dialog');await p.keyboard.press('Escape');
- assert.equal(await p.locator('dialog[open]').count(),0);
- assert.deepEqual(errors,[]);console.log('PASS: detail routes, history, draft recovery, responsive panels, keyboard dialogs'+(zoom?', native 200% zoom':''));
+ console.log('Screenshot:',await shot(zoom?'student practice 200':'student practice'));
+ await p.getByRole('button',{name:'返回练习列表',exact:true}).click();await p.waitForTimeout(600);
+ await p.getByRole('heading',{name:'日常练习',exact:true}).waitFor();
+
+ assert.deepEqual(errors,[],'no uncaught page errors expected');
+ console.log('PASS: teacher+student 11 modules, library/ability/record/practice detail routes, hash restore after reload, browser back/forward, panel switching, no horizontal overflow'+(zoom?', native 200% zoom':''));
 }finally{await context.close();}
