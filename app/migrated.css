@@ -529,6 +529,17 @@
 .teacher-prerequisite { display: flex; gap: 12px; align-items: center; margin: 16px 0; padding: 12px 15px; border-left: 3px solid #e6a047; color: #796649; background: #fff8e9; font-size: var(--type-ui); }
 .teacher-prerequisite span { color: #877b6a; }
 .teacher-overview-grid { display: grid; grid-template-columns: 1.3fr .8fr; gap: 16px; }
+/* Bar length is the number of reviewable evidence items per dimension — a real, countable
+   quantity from the sample record, not an invented score. §1 rejects baseless radar charts,
+   so this stays a bar chart and 数据不足 keeps an empty track instead of a zero bar. */
+.dimension-chart { display: grid; gap: 10px; margin: 16px 0 6px; }
+.dimension-bar { display: grid; grid-template-columns: 84px minmax(0,1fr) 58px; align-items: center; gap: 10px; font-size: var(--type-ui); }
+.dimension-bar-name { color: var(--text); }
+.dimension-bar-track { position: relative; height: 14px; border-radius: 7px; background: var(--primary-soft); overflow: hidden; display: flex; align-items: center; }
+.dimension-bar-track i { display: block; height: 100%; border-radius: 7px; background: var(--primary); }
+.dimension-bar-track i.state-待提升 { background: #e6a047; }
+.dimension-bar-track em { font-style: normal; padding-left: 8px; color: var(--muted); font-size: var(--type-caption); }
+.dimension-bar-value { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
 .teacher-radar, .teacher-summary, .teacher-suggestion { border: 1px solid var(--primary-soft); border-radius: 13px; background: white; }
 .teacher-radar { padding: 20px; }
 .teacher-radar > header, .teacher-suggestion > header { display: flex; justify-content: space-between; align-items: flex-start; }

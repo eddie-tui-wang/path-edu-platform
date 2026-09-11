@@ -156,8 +156,9 @@ html { scroll-padding-bottom:110px; }
 .data-table > div { display:grid; grid-template-columns:var(--cols,minmax(0,1fr)); gap:12px; align-items:center; min-height:60px; padding:10px 14px; border-bottom:1px solid var(--border); font-size:var(--type-ui); }
 .data-table > div:last-child { border-bottom:0; }
 .data-table > div.head { min-height:40px; color:var(--muted); background:var(--background); font-size:var(--type-caption); }
-.data-table > div > span:first-child b { display:block; font-weight:600; }
-.data-table > div > span:first-child small { display:block; margin-top:3px; color:var(--muted); font-size:var(--type-caption); }
+.data-table > div > span,.data-table summary > span { min-width:0; }
+.data-table > div > span:first-child b,.data-table summary > span:first-child b { display:block; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.data-table > div > span:first-child small { display:block; margin-top:3px; color:var(--muted); font-size:var(--type-caption); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .data-table button { justify-self:start; padding:0; border:0; background:transparent; color:var(--primary); font-size:var(--type-ui); }
 .data-table .row-actions { display:flex; gap:10px; justify-self:end; }
 .data-table .row-empty { padding:16px; color:var(--muted); }
@@ -203,7 +204,12 @@ html { scroll-padding-bottom:110px; }
 .admin-layout { grid-template-columns:minmax(0,1fr); }.admin-layout > .edu-sidebar { display:none; }
 .library-workspace { width:100%; min-width:0; }/* Page header standard: [← back] [title block] ...... [switches] [actions].
    Back is always the first child, i.e. the top-left control; scope switches sit on the title row. */
-.library-header { display:flex; justify-content:flex-start; gap:16px; align-items:center; margin-bottom:24px; flex-wrap:wrap; }.library-header h1 { margin:0; font-size:28px; }.library-header p { margin:4px 0; color:var(--muted); }
+.library-header { display:flex; justify-content:flex-start; gap:16px; align-items:center; margin-bottom:24px; flex-wrap:wrap; }
+/* When the header carries a back link, that link takes the line above the title — the slot the
+   eyebrow used to occupy — and the title block keeps its actions on the row below (2026-09-11). */
+.library-header:has(.page-back) { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; column-gap:16px; row-gap:6px; }
+.library-header:has(.page-back) > .page-back { grid-column:1 / -1; justify-self:start; }
+.library-header:has(.page-back) > .library-header-actions { margin-inline-start:0; }.library-header h1 { margin:0; font-size:28px; }.library-header p { margin:4px 0; color:var(--muted); }
 .library-tabs,.library-toolbar,.library-detail-actions,.library-pagination { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:20px 0; }
 .library-header-actions { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-inline-start:auto; }
 /* Back is always the first element of the page header (top-left). The arrow is aria-hidden
@@ -218,7 +224,11 @@ html { scroll-padding-bottom:110px; }
 .ui-button.page-back:focus-visible,button.page-back:focus-visible { outline:2px solid var(--primary); outline-offset:3px; border-radius:4px; }
 .library-header-actions .library-tabs { margin:0; gap:8px; }
 .library-categories { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }.library-category { border:1px solid var(--border); background:white; border-radius:10px; padding:16px; text-align:left; color:var(--text); }.library-category b,.library-category span { display:block; }.library-category span { font-size:14px; margin-top:6px; color:var(--muted); }.library-category[aria-pressed=true] { border-color:var(--primary); background:var(--primary-soft); }
-.library-toolbar { padding:16px; background:white; border:1px solid var(--border); border-radius:12px; align-items:center; }.library-toolbar label { display:grid; gap:6px; min-width:0; }.library-toolbar label:first-child { flex:1; }.library-toolbar input,.library-toolbar select { padding:10px; border:1px solid var(--border); border-radius:8px; min-width:0; background:white; color:var(--text); }.library-view-toggle { display:flex; gap:6px; }
+.library-toolbar { padding:16px; background:white; border:1px solid var(--border); border-radius:12px; align-items:center; }
+/* A control without a caption must line up with the other controls, not with their caption+control
+   groups: centring on the group left 清空筛选 16px above the select. Giving the clear button the same
+   caption+control grid as the labelled fields aligns their control rows exactly (2026-09-11). */
+.library-toolbar-slot { display:grid; gap:6px; }.library-toolbar label { display:grid; gap:6px; min-width:0; }.library-toolbar label:first-child { flex:1; }.library-toolbar input,.library-toolbar select { padding:10px; border:1px solid var(--border); border-radius:8px; min-width:0; background:white; color:var(--text); }.library-view-toggle { display:flex; gap:6px; }
 .library-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }.library-card { overflow:hidden; background:white; border:1px solid var(--border); border-radius:12px; min-width:0; }.library-cover { border:0; padding:0; width:100%; height:170px; position:relative; display:block; overflow:hidden; background:var(--primary-soft); }.library-cover img { width:100%; height:100%; object-fit:cover; }.library-cover > span { position:absolute; bottom:8px; left:8px; background:#fffffff0; padding:2px 8px; border-radius:4px; font-size:14px; color:var(--text); }
 .library-card-body { padding:18px; }.library-card h2 { font-size:18px; margin:10px 0; }.library-card p { font-size:14px; margin:6px 0; }.library-card small { font-size:14px; color:var(--muted); overflow-wrap:anywhere; }.library-card footer { display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; }.library-tags { display:flex; gap:6px; font-size:14px; }.library-tags span,.library-tag { display:inline-block; padding:3px 8px; background:var(--primary-soft); color:var(--primary-strong); border-radius:5px; font-size:14px; }.library-list { display:grid; gap:12px; }.library-list .library-card { display:grid; grid-template-columns:200px minmax(0,1fr); }.library-list .library-cover { height:100%; min-height:160px; }.library-list .library-card footer { margin-top:10px; }.library-pagination { justify-content:flex-end; }.library-pagination > span { margin-right:auto; }
 .library-detail { display:grid; grid-template-columns:minmax(230px,1fr) minmax(0,3fr); gap:20px; }.library-detail h2 { margin-top:0; font-size:20px; }.library-detail h3 { font-size:16px; margin-bottom:6px; }.library-detail p { white-space:pre-wrap; overflow-wrap:anywhere; }.library-detail dl { margin:0; }.library-detail dt { font-size:14px; color:var(--muted); }.library-detail dd { margin:0 0 12px; overflow-wrap:anywhere; }.library-reader { min-width:0; }.library-reader header,.library-reader footer { display:flex; align-items:center; gap:10px; }.library-reader header { justify-content:flex-start; flex-wrap:wrap; }
