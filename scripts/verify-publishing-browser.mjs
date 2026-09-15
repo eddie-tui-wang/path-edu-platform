@@ -51,6 +51,8 @@ try{
  await p.getByRole('button',{name:'保存复核结果',exact:true}).first().click();
  await p.getByRole('button',{name:'发布整场成绩',exact:true}).click();await p.getByRole('button',{name:'确认发布成绩',exact:true}).click();await p.getByText('成绩已发布给相应学生',{exact:true}).waitFor();
  await p.getByRole('button',{name:'退出',exact:true}).click();await login('student');await nav('考试中心');
+ // A submitted attempt no longer resumes 考试中心, so open the result from the card.
+ await p.locator('.exam-card').filter({hasText:'隔离发布验收卷'}).getByRole('button',{name:'查看成绩',exact:true}).click();await p.waitForTimeout(800);
  await p.getByRole('heading',{name:'成绩已发布 · 8分',exact:true}).waitFor();
  // The result page now renders the comment as a labelled block rather than one sentence.
  await p.locator('.result-questions details summary').first().click();await p.waitForTimeout(300);
@@ -99,6 +101,7 @@ try{
  await p.getByText('成绩已发布给相应学生',{exact:true}).waitFor();
 
  await p.getByRole('button',{name:'退出',exact:true}).click();await login('student');await nav('考试中心');
+ await p.locator('.exam-card').filter({hasText:'混合卷验收'}).getByRole('button',{name:'查看成绩',exact:true}).click();await p.waitForTimeout(800);
  await p.getByRole('heading',{name:/成绩已发布 · \d+分/}).waitFor();
  assert.equal(await p.locator('.result-questions li').count(),11,'a mixed paper must return all 11 questions');
  await p.locator('.result-questions details summary').first().click();await p.waitForTimeout(300);
