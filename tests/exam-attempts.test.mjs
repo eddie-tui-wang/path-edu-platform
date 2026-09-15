@@ -18,4 +18,16 @@ test('submission locks answers and is idempotent, without releasing reference',(
 test('timeout uses last saved answers; late writes and quota failures never succeed',()=>{
  const {s}=setup();let a=startAttempt(s,'e',student,now);a=saveAttempt(s,a,student,{q:'1'},0,now+1);assert.throws(()=>saveAttempt(s,a,student,{q:'2'},0,now+60000),/截止/);assert.throws(()=>submitAttempt(s,a,student,false,now+60000));
  assert.throws(()=>submitAttempt({...s,setItem:()=>{throw Error('quota');}},a,student,true,now+60001),/quota/);assert.equal(readAttempts(s)[0].status,'in_progress');const done=submitAttempt(s,a,student,true,now+60002);assert.equal(done.answers.q,'1');assert.equal(done.submitReason,'timeout');
+test('retake replaces the previous attempt only when asked for',()=>{
+ const {s}=setup();
+ let a=startAttempt(s,'e',student,now);a=saveAttempt(s,a,student,{q:'2'},0,now+1);const done=submitAttempt(s,a,student,false,now+2);
+ // default: a submitted attempt is still the attempt
+ assert.equal(startAttempt(s,'e',student,now+3).id,done.id);
+ assert.equal(readAttempts(s).length,1);
+ // retake: a fresh attempt replaces it, and there is never a second record for the same exam
+ const again=startAttempt(s,'e',student,now+4,{retake:true});
+ assert.notEqual(again.id,done.id);assert.equal(again.status,'in_progress');assert.deepEqual(again.answers,{});
+ assert.equal(readAttempts(s).length,1,'a retake must replace, not shadow');
+ assert.equal(startAttempt(s,'e',student,now+5).id,again.id);
+});
 });
